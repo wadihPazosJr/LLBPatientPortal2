@@ -6,7 +6,7 @@ const { MongoClient } = require("mongodb");
 const fetch = require("node-fetch");
 
 const DB_PASS = process.env.DB_PASS;
-const SUBSSCRIPTION_KEY = processs.env.SUBSSCRIPTION_KEY;
+const SUBSCRIPTION_KEY = process.env.SUBSCRIPTION_KEY;
 
 const uri = `mongodb+srv://wadih:${DB_PASS}@clusterllb.auwn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
@@ -15,11 +15,22 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 
-let database = client.db("llb");
-let collection = database.collection("admin");
+let database, collection;
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const AUTHORIZATION = process.env.AUTHORIZATION;
+
+function objToFormURLEncoded(obj) {
+  var formBody = [];
+  for (var property in obj) {
+    var encodedKey = encodeURIComponent(property);
+    var encodedValue = encodeURIComponent(obj[property]);
+    formBody.push(encodedKey + "=" + encodedValue);
+  }
+  formBody = formBody.join("&");
+
+  return formBody;
+}
 
 const updateToken = (refresh, access, refreshExpire, accessExpire) => {
     return new Promise((resolve, reject) => {
@@ -38,36 +49,34 @@ const updateToken = (refresh, access, refreshExpire, accessExpire) => {
 };
 
 function getValidRefreshToken(){
-    let refreshToken;
-    collection.findOne({}, function(err, result) {
-        if(err) console.log(err);
-        refreshToken = result.refresh_token;
-    });
-
-    return refreshToken;
+  return new Promise(async (resolve, reject) => {
+    let oauthInfo = await collection.findOne({purpose: "oauth"}).catch((err) => {
+      console.log(err);
+      return reject(err);
+    })
+    resolve(oauthInfo.refresh_token)
+  })
+    
 }
 
 function refreshAccessToken(){
+  return new Promise(async (resolve, reject) => {
     let newAccessToken;
     let body = {
         grant_type: "refresh_token",
-        refresh_token: getValidRefreshToken()
+        refresh_token: await getValidRefreshToken().catch((err) => {
+          console.log(err);
+          return reject(err);
+        })
       };
       let headers = {
         Authorization: `Basic ${AUTHORIZATION}`,
         "Content-Type": "application/x-www-form-urlencoded",
       };
-      var formBody = [];
-      for (var property in body) {
-        var encodedKey = encodeURIComponent(property);
-        var encodedValue = encodeURIComponent(body[property]);
-        formBody.push(encodedKey + "=" + encodedValue);
-      }
-      formBody = formBody.join("&");
 
     fetch("https://oauth2.sky.blackbaud.com/token", {
         method: "POST",
-        body: formBody,
+        body: objToFormURLEncoded(body),
         headers: headers
     })
     .then(res => res.json())
@@ -79,9 +88,7 @@ function refreshAccessToken(){
         let accessExpiresIn = res.expires_in;
         await updateToken(refreshToken, newAccessToken, refreshExpiresIn, accessExpiresIn)
           .then(() => {
-            resolve(refreshToken);
-            resolve(refreshExpiresIn);
-            resolve(accessExpiresIn);
+            resolve(newAccessToken);
           })
           .catch((err) => {
             reject(err);
@@ -90,46 +97,150 @@ function refreshAccessToken(){
       .catch((err) => {
         reject(err);
       });
-
-      return newAccessToken;
+  })
 }
 
 
 function getValidAccessToken(){
-    let database = client.db("llb");
-    let collection = database.collection("admin");
+  return new Promise(async (resolve, reject) => {
     let accessToken;
     let accessExpiresOn;
-    collection.findOne({}, function(err, result) {
-        if(err) console.log(err);
-        accessToken = result.access_token;
-        accessExpiresOn = result.access_expires_on;
+    const result = await collection.findOne({purpose: "oauth"}).catch((err) => {
+      console.log(err);
+      return reject(err);
     });
+
+    
+    accessToken = result.access_token;
+    accessExpiresOn = result.access_expires_on;
 
     let fiveMinBeforeExpire = accessExpiresOn - 300000;
 
+
     if(Date.now() >= fiveMinBeforeExpire)
     {
-        refreshAccessToken();
+        console.log("5 MIN BEFORE EXPIRE")
+        let accessTokenRefreshed = await refreshAccessToken().catch( err => {
+          console.log(err);
+          reject(err);
+        });
+        resolve(accessTokenRefreshed);
     }
     else
     {
-        return accessToken;
+        resolve(accessToken);
     }
+  })
 }
 
-app.use((req, res, next) => {
-    req.header = {"Content-Type": "application/x-www-form-urlencoded", "Bb-ApiSubscription-Key": SUBSSCRIPTION_KEY, "Authorization": getValidAccessToken()};
+app.use(async (req, res, next) => {
+    req.header = {"Content-Type": "application/x-www-form-urlencoded", "Bb-Api-Subscription-Key": SUBSCRIPTION_KEY, "Authorization": `Bearer ${await getValidAccessToken()}`};
     next();
+})
+
+//Returns whether a constituent is a parent, patient, or socialworker based off email
+app.get("/constituentFromEmail", async (req, res) => {
+  
+  let constituentInfo = await getConstituentFromEmail(req.query.email, req.header);
+  console.log(constituentInfo)
+  if(constituentInfo.status === "error") {
+    res.send(constituentInfo);
+    return;
+  }
+  
+  let constituentCodeList = await getConsituentCodeListFromId(constituentInfo.id, req.header);
+  console.log(constituentCodeList)
+  let parentIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "parent")
+  let patientIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "patient")
+
+  let socialWorkerIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "social worker") 
+
+
+  if(parentIndex !== -1) {
+    res.redirect(`/p-portal/${constituentInfo.id}?isParent=true`)
+  } else if (patientIndex !== -1) {
+    res.redirect(`/s-portal/${constituentInfo.id}?isParent=false`)
+  } else if (socialWorkerIndex !== -1) {
+    res.redirect(`/s-portal/${constituentInfo.id}`)
+  } else {
+    res.send({status: "error", error: "Not a patient, parent, or social worker."})
+  }
+
+})
+
+const getConstituentFromEmail = (email, headers) => {
+  return new Promise((resolve, reject) => {
+    fetch(`https://api.sky.blackbaud.com/constituent/v1/constituents/search?search_text=${email}`, {
+      method: "GET",
+      headers: headers
+    })
+    .then((response) => response.json())
+    .then((response) => {
+      // console.log(response)
+      if(response.statusCode && response.statusCode !== 200) {
+        resolve({status: "error", error: response.message})
+      } else {
+        if(response.count <= 0) {
+          resolve({status: "error", error: "User not found."})
+        } else {
+          let constituentInfo = response.value.find(obj => {
+            return obj.email === email;
+          })
+          resolve(constituentInfo);
+        }
+      }
+    })
+  })
+}
+
+const getConstituentFromId = (id) => {
+  return new Promise((resolve, reject) => {
+    fetch(`https://api.sky.blackbaud.com/constituent/v1/constituents/${id}/`, {
+      method: "GET",
+      headers: req.header
+    })
+    .then(response => response.json())
+    .then(response => {
+      if(response.statusCode !== 200) {
+        resolve({status: "error", error: response.message})
+      } else {
+        resolve(response)
+      }
+    })
+  })
+  
+}
+
+const getConsituentCodeListFromId = (id, headers) => {
+  return new Promise((resolve, reject) => {
+    fetch(`https://api.sky.blackbaud.com/constituent/v1/constituents/${id}/constituentcodes`, {
+      method: "GET",
+      headers: headers
+    })
+    .then(response => response.json())
+    .then(response => {
+      if(response.statusCode && response.statusCode !== 200) {
+        resolve({status: "error", error: response.message})
+      } else {
+        resolve(response)
+      }
+    })
+  })
+}
+
+//Returns constituent info based off Id
+app.get("/constituent", async (req, res) => {
+    res.send(await getConstituentFromId(req.query.id));
 })
 
 
 const start = async () => {
   try {
-    client.on("connect", () => {
+    client.connect().then(() => {
       console.log("CONNECTED TO MONGODB!");
+      database = client.db("llb");
+      collection = database.collection("admin");
     });
-    await client.connect();
     app.listen(port, () => {
       console.log(`Example app listening at http://localhost:${port}`);
     });

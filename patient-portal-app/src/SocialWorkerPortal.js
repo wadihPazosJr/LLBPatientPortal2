@@ -2,16 +2,16 @@ import React, {Component} from 'react'
 import { useParams } from 'react-router'
 
 
-export class SocialWorkerPortal extends Component {
+const SocialWorkerPortal = () => {
     
     /* socialWorkerEmail=useParams() */
-    render(){
+    let {sEmail} = useParams();
+    
         return (
             <div>
-                <h1>Social Worker Portal: {this.socialWorkerEmail}</h1>
+                <h1>Social Worker Portal: {sEmail}</h1>
             </div>
         )
   }
-}
 
 export default SocialWorkerPortal
