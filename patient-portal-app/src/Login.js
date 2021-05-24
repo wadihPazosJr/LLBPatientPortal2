@@ -1,6 +1,6 @@
-import React, {Component} from 'react'
+import React from 'react'
 import GoogleLogin from 'react-google-login'
-import {Redirect, useHistory} from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 
 
@@ -9,7 +9,7 @@ const Login = () => {
     const successfulGoogleResponse = async (response) => {
         console.log(response.profileObj)
         const email = response.profileObj.email;
-        const constituentCodes = await getConstituentCodesFromEmail(email);
+        await getConstituentCodesFromEmail(email);
       }
 
       const getConstituentCodesFromEmail = (email) => {
@@ -51,6 +51,7 @@ const Login = () => {
             onFailure={failGoogleResponse}
             cookiePolicy={'single_host_origin'}
             />
+            <Link to="/new-account">Create a new account</Link>
           </div>
       )
     }

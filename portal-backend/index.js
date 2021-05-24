@@ -426,22 +426,20 @@ app.get("/constituentFromEmail", async (req, res) => {
   }
   
   let constituentCodeList = await getConsituentCodeListFromId(constituentInfo.id, req.header);
+  
   let parentIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "parent")
-  let patientIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "patient")
 
   let socialWorkerIndex = constituentCodeList.value.findIndex((code) => code.description.toLowerCase() === "social worker") 
 
 
   if(parentIndex !== -1) {
-    res.redirect(`/p-portal/${constituentInfo.id}?isParent=true`)
-  } else if (patientIndex !== -1) {
-    res.redirect(`/p-portal/${constituentInfo.id}?isParent=false`)
+    res.redirect(`/p-portal/${constituentInfo.id}`)
   } else if (socialWorkerIndex !== -1) {
     res.redirect(`/s-portal/${constituentInfo.id}`)
   } else {
     res.send({status: "error", error: "Not a patient, parent, or social worker."})
   }
-
+  
 })
 
 

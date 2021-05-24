@@ -2,10 +2,10 @@ import React from 'react'
 import { useParams } from 'react-router'
 
 function PatientPortal(){
-    let {pEmail} = useParams();
+    let {parentId} = useParams();
     return (
     <div>
-        <h1>Patient portal: {pEmail}</h1>
+        <h1>Patient portal: {parentId}</h1>
     </div>
     )
 }
