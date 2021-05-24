@@ -10,10 +10,6 @@ const Login = () => {
         console.log(response.profileObj)
         const email = response.profileObj.email;
         const constituentCodes = await getConstituentCodesFromEmail(email);
-        
-        
-        
-        // window.location.href = `/p-portal/${email}`
       }
 
       const getConstituentCodesFromEmail = (email) => {
@@ -29,7 +25,7 @@ const Login = () => {
         .then((res) => {
           console.log(res)
           
-          if(res.status === "error") {
+          if(res.status && res.status === "error") {
             // do something with error
             alert(res.error);
           } else {
