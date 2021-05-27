@@ -1,10 +1,9 @@
 //Need to add validation for emails and phone number.
-// Need to make the Hospital field a select and diagnosis one too
-
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import {hospitalArr, diagnosisArray} from "./Components/ImportedArrays";
+
 
 const CreateAccount = () => {
   //Properties
@@ -16,6 +15,7 @@ const CreateAccount = () => {
   const [parentOnePhone, setParentOnePhone] = useState();
   const [parentOneAddress, setParentOneAddress] = useState();
   const [parentOneCity, setParentOneCity] = useState();
+  const [parentOneState, setParentOneState] = useState();
   const [parentOneZip, setParentOneZip] = useState();
   const [parentOneCountry, setParentOneCountry] = useState();
   const [parentOneVeteran, setParentOneVeteran] = useState();
@@ -28,6 +28,7 @@ const CreateAccount = () => {
   const [parentTwoPhone, setParentTwoPhone] = useState();
   const [parentTwoAddress, setParentTwoAddress] = useState();
   const [parentTwoCity, setParentTwoCity] = useState();
+  const [parentTwoState, setParentTwoState] = useState();
   const [parentTwoZip, setParentTwoZip] = useState();
   const [parentTwoCountry, setParentTwoCountry] = useState();
   const [parentTwoVeteran, setParentTwoVeteran] = useState();
@@ -44,10 +45,12 @@ const CreateAccount = () => {
   const [patientSocialWorker, setPatientSocialWorker] = useState();
   const [patientAddress, setPatientAddress] = useState();
   const [patientCity, setPatientCity] = useState();
+  const [patientState, setPatientState] = useState();
   const [patientZip, setPatientZip] = useState();
   const [patientCountry, setPatientCountry] = useState();
 
   const [successSubmit, setSuccessSubmit] = useState(false);
+  const [socialWorkerMessage, setSocialWorkerMessage] = useState("");
 
   const formatReqBody = () => {
     return {
@@ -55,25 +58,28 @@ const CreateAccount = () => {
         address: {
           address_lines: patientAddress,
           city: patientCity,
+          state: patientState,
           country: patientCountry,
           postal_code: patientZip,
           type: "Home",
         },
         birthdate: {
-          d: patientDay,
-          m: patientMonth,
-          y: patientYear,
+          d: parseInt(patientDay),
+          m: parseInt(patientMonth),
+          y: parseInt(patientYear),
         },
         first: patientFirst,
         gender: patientGender,
         last: patientLast,
         type: "Individual",
+        inactive: false,
       },
       parents: [
         {
           address: {
             address_lines: parentOneAddress,
             city: parentOneCity,
+            state: parentOneState,
             country: parentOneCountry,
             postal_code: parentOneZip,
             type: "Home",
@@ -90,11 +96,13 @@ const CreateAccount = () => {
             type: "None",
           },
           type: "Individual",
+          inactive: false,
         },
         {
           address: {
             address_lines: parentTwoAddress,
             city: parentTwoCity,
+            state: parentTwoState,
             country: parentTwoCountry,
             postal_code: parentTwoZip,
             type: "Home",
@@ -111,34 +119,39 @@ const CreateAccount = () => {
             type: "None",
           },
           type: "Individual",
+          inactive: false,
         },
       ],
       hospitalName: patientHospital,
       socialWorkerEmail: patientSocialWorker,
       diagnosis: patientDiagnosis,
-      veteranOne: parentOneVeteran,
-      veteranTwo: parentTwoVeteran,
+      veteran: [parentOneVeteran, parentTwoVeteran],
     };
   };
 
   const handleSubmit = async (event) => {
-    const message = await fetch("", {
+    event.preventDefault();
+    console.log("hitting this");
+    const {message, socialWorker} = await fetch("/constituent/family", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formatReqBody()),
-    });
+    })
+      .then((res) => res.json())
+      .catch((err) => console.log(err));
+
+    console.log(`message response was ${JSON.stringify(message)}`);
 
     if (message === "Successfully made new family") {
+      setSocialWorkerMessage(socialWorker);
       setSuccessSubmit(true);
     }
-
-    event.preventDefault();
   };
 
   if (successSubmit) {
     return (
       <div>
-        <h1>Your account has been created</h1>
+        <h1>{`Your account has been created\n${socialWorkerMessage}`}</h1>
         <h1>You can login with google with the email you supplied</h1>
         <Link to="/">Click here to return to Login</Link>
       </div>
@@ -177,10 +190,9 @@ const CreateAccount = () => {
           value={parentOneGender}
           onChange={(e) => setParentOneGender(e.target.value)}
         >
-          <option value="">Select a gender</option>
+          <option value="">Prefer not to say</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
-          <option value="">Prefer not to say</option>
         </select>
         <br />
 
@@ -192,7 +204,7 @@ const CreateAccount = () => {
           value={parentOneEthnicity}
           onChange={(e) => setParentOneEthnicity(e.target.value)}
         >
-          <option value="">Select an ethnicity</option>
+          <option value="">Other</option>
           <option value="African American/African Black/Caribbean">
             African American/African Black/Caribbean
           </option>
@@ -200,7 +212,6 @@ const CreateAccount = () => {
           <option value="Caucasion">Caucasion</option>
           <option value="Hispanic/Latino">Hispanic/Latino</option>
           <option value="Native American">Native American</option>
-          <option value="">Other</option>
         </select>
         <br />
         <label>Email address:</label>
@@ -243,6 +254,74 @@ const CreateAccount = () => {
           onChange={(e) => setParentOneCity(e.target.value)}
         />
         <br />
+        <label>State</label>
+        <br />
+        <select
+          required
+          name="parentOneState"
+          value={parentOneState}
+          onChange={(e) => setParentOneState(e.target.value)}
+        >
+          <option value="">Please select a state</option>
+          <option value="AL">Alabama</option>
+          <option value="AK">Alaska</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DE">Delaware</option>
+          <option value="DC">District Of Columbia</option>
+          <option value="FL">Florida</option>
+          <option value="GA">Georgia</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="ME">Maine</option>
+          <option value="MD">Maryland</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MS">Mississippi</option>
+          <option value="MO">Missouri</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NV">Nevada</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NJ">New Jersey</option>
+          <option value="NM">New Mexico</option>
+          <option value="NY">New York</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
+          <option value="SD">South Dakota</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="UT">Utah</option>
+          <option value="VT">Vermont</option>
+          <option value="VA">Virginia</option>
+          <option value="WA">Washington</option>
+          <option value="WV">West Virginia</option>
+          <option value="WI">Wisconsin</option>
+          <option value="WY">Wyoming</option>
+          <option value="AS">American Samoa</option>
+          <option value="GU">Guam</option>
+          <option value="MP">Northern Mariana Islands</option>
+          <option value="PR">Puerto Rico</option>
+          <option value="UM">United States Minor Outlying Islands</option>
+          <option value="VI">Virgin Islands</option>
+        </select>
+        <br />
         <label>zip code</label>
         <br />
         <input
@@ -272,7 +351,7 @@ const CreateAccount = () => {
           value={parentOneVeteran}
           onChange={(e) => setParentOneVeteran(e.target.value)}
         >
-          <option value="No">Select an option</option>
+          <option value="">Select an option</option>
           <option value="Yes">Yes</option>
           <option value="No">No</option>
         </select>
@@ -306,22 +385,29 @@ const CreateAccount = () => {
           value={parentTwoGender}
           onChange={(e) => setParentTwoGender(e.target.value)}
         >
-          <option value="">Select a gender</option>
+          <option value="">Prefer not to say</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
-          <option value="">Prefer not to say</option>
         </select>
         <br />
 
         <label>Ethnicity:</label>
         <br />
-        <input
+        <select
           required
           name="parentTwoEthnicity"
-          type="text"
           value={parentTwoEthnicity}
           onChange={(e) => setParentTwoEthnicity(e.target.value)}
-        />
+        >
+          <option value="">Other</option>
+          <option value="African American/African Black/Caribbean">
+            African American/African Black/Caribbean
+          </option>
+          <option value="Asian">Asian</option>
+          <option value="Caucasion">Caucasion</option>
+          <option value="Hispanic/Latino">Hispanic/Latino</option>
+          <option value="Native American">Native American</option>
+        </select>
         <br />
         <label>Email address:</label>
         <br />
@@ -363,6 +449,74 @@ const CreateAccount = () => {
           onChange={(e) => setParentTwoCity(e.target.value)}
         />
         <br />
+        <label>State</label>
+        <br/>
+        <select
+          required
+          name="parentTwoState"
+          value={parentTwoState}
+          onChange={(e) => setParentTwoState(e.target.value)}
+        >
+          <option value="">Please select a state</option>
+          <option value="AL">Alabama</option>
+          <option value="AK">Alaska</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DE">Delaware</option>
+          <option value="DC">District Of Columbia</option>
+          <option value="FL">Florida</option>
+          <option value="GA">Georgia</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="ME">Maine</option>
+          <option value="MD">Maryland</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MS">Mississippi</option>
+          <option value="MO">Missouri</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NV">Nevada</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NJ">New Jersey</option>
+          <option value="NM">New Mexico</option>
+          <option value="NY">New York</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
+          <option value="SD">South Dakota</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="UT">Utah</option>
+          <option value="VT">Vermont</option>
+          <option value="VA">Virginia</option>
+          <option value="WA">Washington</option>
+          <option value="WV">West Virginia</option>
+          <option value="WI">Wisconsin</option>
+          <option value="WY">Wyoming</option>
+          <option value="AS">American Samoa</option>
+          <option value="GU">Guam</option>
+          <option value="MP">Northern Mariana Islands</option>
+          <option value="PR">Puerto Rico</option>
+          <option value="UM">United States Minor Outlying Islands</option>
+          <option value="VI">Virgin Islands</option>
+        </select>
+        <br />
         <label>zip code</label>
         <br />
         <input
@@ -392,7 +546,7 @@ const CreateAccount = () => {
           value={parentTwoVeteran}
           onChange={(e) => setParentTwoVeteran(e.target.value)}
         >
-          <option value="No">Select an option</option>
+          <option value="">Select an option</option>
           <option value="Yes">Yes</option>
           <option value="No">No</option>
         </select>
@@ -426,21 +580,28 @@ const CreateAccount = () => {
           value={patientGender}
           onChange={(e) => setPatientGender(e.target.value)}
         >
-          <option value="">Select a gender</option>
+          <option value="">Prefer not to say</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
-          <option value="">Prefer not to say</option>
         </select>
         <br />
         <label>Ethnicity:</label>
         <br />
-        <input
+        <select
           required
           name="patientEthnicity"
-          type="text"
           value={patientEthnicity}
           onChange={(e) => setPatientEthnicity(e.target.value)}
-        />
+        >
+          <option value="">Other</option>
+          <option value="African American/African Black/Caribbean">
+            African American/African Black/Caribbean
+          </option>
+          <option value="Asian">Asian</option>
+          <option value="Caucasion">Caucasion</option>
+          <option value="Hispanic/Latino">Hispanic/Latino</option>
+          <option value="Native American">Native American</option>
+        </select>
         <br />
         <h2>Date of birth:</h2>
         <label>Month</label>
@@ -478,23 +639,39 @@ const CreateAccount = () => {
         <br />
         <label>Diagnosis</label>
         <br />
-        <input
+        <select
           required
           name="patientDiagnosis"
-          type="text"
           value={patientDiagnosis}
           onChange={(e) => setPatientDiagnosis(e.target.value)}
-        />
+        >
+          <option value="">Please select a diagnosis</option>
+          {diagnosisArray.map((diagnosis, i) => {
+            return (
+              <option key={i} value={diagnosis}>
+                {diagnosis}
+              </option>
+            );
+          })}
+        </select>
         <br />
         <label>Hospital</label>
         <br />
-        <input
+        <select
           required
           name="patientHospital"
-          type="text"
           value={patientHospital}
           onChange={(e) => setPatientHospital(e.target.value)}
-        />
+        >
+          <option value="">Please select a hospital</option>
+          {hospitalArr.map((hospital, i) => {
+            return (
+              <option key={i} value={hospital}>
+                {hospital}
+              </option>
+            );
+          })}
+        </select>
         <br />
         <label>Social Worker Email</label>
         <br />
@@ -525,6 +702,74 @@ const CreateAccount = () => {
           value={patientCity}
           onChange={(e) => setPatientCity(e.target.value)}
         />
+        <br />
+        <label>State</label>
+        <br/>
+        <select
+          required
+          name="patientState"
+          value={patientState}
+          onChange={(e) => setPatientState(e.target.value)}
+        >
+          <option value="">Please select a state</option>
+          <option value="AL">Alabama</option>
+          <option value="AK">Alaska</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DE">Delaware</option>
+          <option value="DC">District Of Columbia</option>
+          <option value="FL">Florida</option>
+          <option value="GA">Georgia</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="ME">Maine</option>
+          <option value="MD">Maryland</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MS">Mississippi</option>
+          <option value="MO">Missouri</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NV">Nevada</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NJ">New Jersey</option>
+          <option value="NM">New Mexico</option>
+          <option value="NY">New York</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
+          <option value="SD">South Dakota</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="UT">Utah</option>
+          <option value="VT">Vermont</option>
+          <option value="VA">Virginia</option>
+          <option value="WA">Washington</option>
+          <option value="WV">West Virginia</option>
+          <option value="WI">Wisconsin</option>
+          <option value="WY">Wyoming</option>
+          <option value="AS">American Samoa</option>
+          <option value="GU">Guam</option>
+          <option value="MP">Northern Mariana Islands</option>
+          <option value="PR">Puerto Rico</option>
+          <option value="UM">United States Minor Outlying Islands</option>
+          <option value="VI">Virgin Islands</option>
+        </select>
         <br />
         <label>zip code</label>
         <br />
