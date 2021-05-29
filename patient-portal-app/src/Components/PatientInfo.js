@@ -1,11 +1,15 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { hospitalArr, diagnosisArray } from "./ImportedArrays";
 
 function PatientInfo(props) {
-    console.log(props);
+  console.log(props);
   const addressArr = props.address.value.split(", ");
   const birthDayArr = props.birthdate.split("/");
-  const rightHospital = props.hospital.value !== undefined ? props.hospital.value.replaceAll(",", "") : "";
+  const rightHospital =
+    props.hospital.value !== undefined
+      ? props.hospital.value.replaceAll(",", "")
+      : "";
   const [onEdit, setOnEdit] = useState();
   const [patientFirst, setPatientFirst] = useState(props.first);
   const [patientLast, setPatientLast] = useState(props.last);
@@ -18,7 +22,7 @@ function PatientInfo(props) {
   const [patientHospital, setPatientHospital] = useState(rightHospital);
 
   const [patientSocialWorker, setPatientSocialWorker] = useState(
-    props.socialWorker !== "" ? props.socialWorker.email: ""
+    props.socialWorker !== "" ? props.socialWorker.email : ""
   );
 
   const [patientAddress, setPatientAddress] = useState(addressArr[0]);
@@ -59,27 +63,33 @@ function PatientInfo(props) {
           value: patientDiagnosis,
         },
       ],
-      relationships: [
-        {
-          update: props.socialWorker.email !== patientSocialWorker && patientSocialWorker !== "",
-          relationship_id: props.socialWorker !== "" ? props.socialWorker.relationshipId : "",
-          methodToGetNewConstituent: "email",
-          type: "Patient",
-          reciprocal_type: "Social Worker",
-          value: patientSocialWorker,
-        },
-        {
-          update: rightHospital !== patientHospital && patientHospital !== "",
-          relationship_id: rightHospital !== "" ? props.hospital.relationshipId : "",
-          methodToGetNewConstituent: "name",
-          type: "Patient",
-          reciprocal_type: "Hospital",
-          value: patientHospital,
-        },
-      ],
+      socialWorkerRelationship: {
+        update:
+          props.socialWorker.email !== patientSocialWorker &&
+          patientSocialWorker !== "",
+        relationship_id:
+          props.socialWorker !== "" ? props.socialWorker.relationshipId : "",
+        methodToGetNewConstituent: "email",
+        type: "Patient",
+        reciprocal_type: "Social Worker",
+        value: patientSocialWorker,
+      },
+      hospitalRelationship: {
+        update: rightHospital !== patientHospital && patientHospital !== "",
+        relationship_id:
+          rightHospital !== "" ? props.hospital.relationshipId : "",
+        methodToGetNewConstituent: "name",
+        type: "Patient",
+        reciprocal_type: "Hospital",
+        value: patientHospital,
+      }
     };
 
-    fetch(`/constituent/update?id=${props.id}`, {
+    console.log(
+      `About to update patient and the request body: ${JSON.stringify(reqBody)}`
+    );
+
+    fetch(`/constituent/updatePatient?id=${props.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
 
@@ -87,15 +97,29 @@ function PatientInfo(props) {
     })
       .then((res) => res.json())
       .then((res) => {
+        console.log(
+          `Finished the call of updating and the value of the response is ${res}`
+        );
         if (res.message !== "") {
           alert(res.message);
         }
         if (res.redirect) {
-          console.log("was successful about to reload");
           window.location.reload();
         }
       });
   };
+
+  const handleDeletePatient = () => {
+    fetch(`/constituent/socialWorker/deletePatient?id=${props.socialWorker.relationshipId}`, {
+      method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(res => {
+      if(res.redirect) {
+        window.location.reload()
+      }
+    })
+  }
 
   if (onEdit) {
     return (
@@ -310,11 +334,14 @@ function PatientInfo(props) {
           value={patientCountry}
           onChange={(e) => setPatientCountry(e.target.value)}
         />
-        <br/>
-        <br/>
+        <br />
+        <br />
         <input type="submit" value="Update Info"></input>
-        <br/>
-        <br/>
+        <br />
+        <br />
+        {props.view === "Social Worker" && <button onClick={handleDeletePatient}>Delete Patient</button>}
+        <br />
+        <br />
         <button onClick={handleButtonClick}>Cancel</button>
       </form>
     );
@@ -331,6 +358,8 @@ function PatientInfo(props) {
         <li>Social worker name: {props.socialWorker.name}</li>
         <li>Social worker email: {props.socialWorker.email}</li>
         <button onClick={handleButtonClick}>Edit info</button>
+        <br/>
+        {props.view === "Social Worker" && <Link to={`/s-portal/${props.socialWorkerId}/patients/services?patientId=${props.id}&patientName=${`${props.first} ${props.last}`}`}>Patient's services</Link>}
       </ul>
     );
   }

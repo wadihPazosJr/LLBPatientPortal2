@@ -46,7 +46,7 @@ function ParentInfo(props) {
         ]
       };
 
-      fetch(`/constituent/update?id=${props.id}`, {
+      fetch(`/constituent/updateParent?id=${props.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         
@@ -54,9 +54,6 @@ function ParentInfo(props) {
     })
         .then((res) => res.json())
         .then((res) => {
-          if (res.message !== "") {
-              alert(res.message)
-          }
           if(res.redirect){
             window.location.reload();
           }

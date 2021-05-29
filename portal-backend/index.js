@@ -1069,45 +1069,18 @@ app.post("/constituent/family", async (req, res) => {
   });
 });
 
-//Updates a constituent's info based off the constituent Id
-app.patch("/constituent/update", async (req, res) => {
-  console.log("Started updating");
+//Updates a parents's info based off their id
+app.patch("/constituent/updateParent", async (req, res) => {
   req.header["Content-Type"] = "application/json";
-  let constituentBody = {};
-  const email =
-    req.body.constituentInfo.email !== undefined
-      ? req.body.constituentInfo.email
-      : undefined;
-  const address =
-    req.body.constituentInfo.address !== undefined
-      ? req.body.constituentInfo.address
-      : undefined;
-  const phone =
-    req.body.constituentInfo.phone !== undefined
-      ? req.body.constituentInfo.phone
-      : undefined;
+  let constituentBody = {
+    first: req.body.constituentInfo.first,
+    last: req.body.constituentInfo.last,
+  };
 
-  const customFields =
-    req.body.customFields !== undefined ? req.body.customFields : undefined;
-  const relationships =
-    req.body.relationships !== undefined ? req.body.relationships : undefined;
-
-  if (req.body.type === "Parent") {
-    constituentBody = {
-      first: req.body.constituentInfo.first,
-      last: req.body.constituentInfo.last,
-    };
-  } else if (req.body.type === "Patient") {
-    constituentBody = {
-      first: req.body.constituentInfo.first,
-      last: req.body.constituentInfo.last,
-      birthdate: {
-        d: req.body.constituentInfo.birthdate.d,
-        m: req.body.constituentInfo.birthdate.m,
-        y: req.body.constituentInfo.birthdate.y,
-      },
-    };
-  }
+  let email = req.body.constituentInfo.email;
+  let address = req.body.constituentInfo.address;
+  let phone = req.body.constituentInfo.phone;
+  let customFields = req.body.customFields;
 
   await updateConstituent(
     req.query.id,
@@ -1115,175 +1088,331 @@ app.patch("/constituent/update", async (req, res) => {
     req.header
   );
 
-  if (email !== undefined) {
-    await updateConstituentEmail(
-      email.id,
-      JSON.stringify({ address: email.value }),
-      req.header
-    );
-  }
+  await updateConstituentEmail(
+    email.id,
+    JSON.stringify({ address: email.value }),
+    req.header
+  );
 
-  if (phone !== undefined) {
-    await updateConstituentPhone(
-      phone.id,
-      JSON.stringify({ number: phone.value }),
-      req.header
-    );
-  }
+  await updateConstituentAddress(
+    address.id,
+    JSON.stringify({
+      address_lines: address.address_lines,
+      city: address.city,
+      state: address.state,
+      postal_code: address.zip,
+      country: address.country,
+    }),
+    req.header
+  );
 
-  if (address !== undefined) {
-    await updateConstituentAddress(
-      address.id,
-      JSON.stringify({
-        address_lines: address.address_lines,
-        city: address.city,
-        state: address.state,
-        postal_code: address.zip,
-        country: address.country,
-      }),
-      req.header
-    );
-  }
+  await updateConstituentPhone(
+    phone.id,
+    JSON.stringify({ number: phone.value }),
+    req.header
+  );
 
-  if (customFields !== undefined) {
-    Promise.all(
-      customFields.map(async (customField) => {
-        updateConstituentCustomField(
-          customField.id,
-          JSON.stringify({ value: customField.value }),
-          req.header
-        );
-      })
-    );
-  }
+  Promise.all(
+    customFields.map(async (customField) => {
+      updateConstituentCustomField(
+        customField.id,
+        JSON.stringify({ value: customField.value }),
+        req.header
+      );
+    })
+  ).then(() => res.send({ redirect: true, message: "Success" }));
+});
+
+//updates a patient's info based off their id
+app.patch("/constituent/updatePatient", async (req, res) => {
+  console.log(`Starting to update patient`);
+
+  req.header["Content-Type"] = "application/json";
+
+  let constituentBody = {
+    first: req.body.constituentInfo.first,
+    last: req.body.constituentInfo.last,
+    birthdate: {
+      d: req.body.constituentInfo.birthdate.d,
+      m: req.body.constituentInfo.birthdate.m,
+      y: req.body.constituentInfo.birthdate.y,
+    },
+  };
+
+  console.log(
+    `value of request body to update the constituent: ${JSON.stringify(
+      constituentBody
+    )}\n\n`
+  );
+
+  const address = req.body.constituentInfo.address;
+  const customFields = req.body.customFields;
+  const hospitalRelationship = req.body.hospitalRelationship;
+  const socialWorkerRelationship = req.body.socialWorkerRelationship;
+
+  console.log("Updating the constituent...\n\n");
+
+  await updateConstituent(
+    req.query.id,
+    JSON.stringify(constituentBody),
+    req.header
+  );
+
+  console.log("Finished updating the constituent\n\n");
+
+  console.log("Starting to update the patient's address...\n\n");
+  await updateConstituentAddress(
+    address.id,
+    JSON.stringify({
+      address_lines: address.address_lines,
+      city: address.city,
+      state: address.state,
+      postal_code: address.zip,
+      country: address.country,
+    }),
+    req.header
+  );
+
+  console.log("Finished updating the patient's address...\n\n");
+
+  console.log("Starting to update the custom fields...\n\n");
+  Promise.all(
+    customFields.map(async (customField) => {
+      updateConstituentCustomField(
+        customField.id,
+        JSON.stringify({ value: customField.value }),
+        req.header
+      );
+    })
+  );
+
+  console.log("Finished updating the custom fields...\n\n");
 
   let relationshipMessage = "";
 
-  if (relationships !== undefined) {
-    Promise.all(
-      relationships.map(async (relationship) => {
-        console.log(
-          `working on relationship: ${JSON.stringify(relationship)}\n\n`
-        );
-        if (!relationship.update) {
-          console.log(`the relationship is not gonna update\n\n`);
-          return "no update";
-        }
+  console.log("Starting to work on the relationships...\n\n");
 
-        //Delete the relationship
-        if (relationship.relationship_id !== "") {
-          console.log(
-            `deleting the relationship because the relationship_id exists\n\n`
-          );
-          deleteRelationship(relationship.relationship_id, req.header);
-        }
+  console.log(
+    `Working on hospital: ${JSON.stringify(hospitalRelationship)}\n\n`
+  );
 
-        let newConstituent = "";
+  if (hospitalRelationship.update) {
+    console.log("It has been determined that the hospital will be updated\n\n");
 
-        if (relationship.methodToGetNewConstituent === "name") {
-          console.log(`getting the constituent by name\n\n`);
-          newConstituent = await getConstituentFromName(
-            relationship.value,
-            req.header
-          );
-          newConstituent = newConstituent.id;
-        } else if (relationship.methodToGetNewConstituent === "email") {
-          console.log(`getting the constituent by email\n\n`);
-          newConstituent = await getConstituentFromEmail(
-            relationship.value,
-            req.header
-          );
-          newConstituent = newConstituent.id;
-        } else {
-          console.log(
-            `method to get the constituent wasn't supplied, not updating\n\n`
-          );
-          return "no update";
-        }
+    if (hospitalRelationship.relation_id !== "") {
+      console.log(
+        "It has been determined that the hospital relationship will be deleted, and a new one will be added. Deleting now...\n\n"
+      );
+      await deleteRelationship(
+        hospitalRelationship.relationship_id,
+        req.header
+      );
+    }
+    let hospitalInfo = await getConstituentFromName(
+      hospitalRelationship.value,
+      req.header
+    );
+    console.log(
+      `The hospitalInfo has been retrieved and it is ${JSON.stringify(
+        hospitalInfo
+      )}`
+    );
+    const error =
+      hospitalInfo !== undefined &&
+      typeof hospitalInfo === "object" &&
+      "status" in hospitalInfo &&
+      hospitalInfo.status === "error" &&
+      hospitalInfo.error === "User not found";
 
-        const constituentError =
-          newConstituent !== undefined &&
-          typeof newConstituent === "object" &&
-          "status" in newConstituent &&
-          newConstituent.status === "error" &&
-          newConstituent.error === "User not found";
+    if (error) {
+      console.log(
+        `The hospital didn't exist so now we are going to make it and add the new relationship..., relationship message should be ${relationshipMessage}\n\n`
+      );
+      let { id: newHospitalId } = await createConstituent(
+        JSON.stringify({
+          inactive: false,
+          name: hospitalRelationship.value,
+          type: "Organization",
+        }),
+        req.header
+      );
 
-        if (constituentError) {
-          if (relationship.reciprocal_type === "Hospital") {
-            console.log(
-              `Hospital couldn't be found so now it is being created\n\n`
-            );
-            createConstituent(
-              JSON.stringify({
-                inactive: false,
-                name: req.body.hospitalName,
-                type: "Organization",
-              }),
-              req.header
-            )
-              .then((response) => response.json())
-              .then((response) => (newConstituent = response.id))
-              .then(async (response) => {
-                console.log(`adding the new hospital's constituent code\n\n`);
-                await createConstituentCode(
-                  JSON.stringify({
-                    constituent_id: response.id,
-                    description: "Hospital",
-                  }),
-                  req.header
-                );
-              });
-          } else if (relationship.reciprocal_type === "Social Worker") {
-            console.log(
-              `The social worker wasn't found so adding a message to display back to user\n\n`
-            );
-            relationshipMessage +=
-              "This social worker wasn't found in our system, we sent an email to them prompting them to create an account. Try again soon.\n";
-            return "no update";
-          }
-        }
-        console.log(
-          `should add ${JSON.stringify({
-            type: relationship.type,
-            reciprocal_type: relationship.reciprocal_type,
-            id: newConstituent,
-          })}`
-        );
-        return {
-          type: relationship.type,
-          reciprocal_type: relationship.reciprocal_type,
-          id: newConstituent,
-        };
-      })
-    )
-      .then((values) => {
-        console.log("Finished first promise all moving to the next...\n\n");
-        Promise.all(
-          values.map(async (value) => {
-            console.log(`working on the update ${value}\n\n`);
-            if (value === "no update") {
-              console.log(`there was no update \n\n`);
-              return "no update";
-            }
-            console.log(
-              `Program determined a new relationship should be created and it is doing that right now.\n\n`
-            );
+      console.log(
+        `The new hospital has been created and the id is: ${newHospitalId}\n\n`
+      );
 
-            await createRelationship(
-              JSON.stringify({
-                constituent_id: value.id,
-                reciprocal_type: value.reciprocal_type,
-                relation_id: req.query.id,
-                type: value.type,
-              }),
-              req.header
-            );
-          })
-        );
-      })
-      .then(() => res.send({ redirect: true, message: relationshipMessage }));
+      console.log("Creating the constituent code...\n\n");
+
+      await createConstituentCode(
+        JSON.stringify({
+          constituent_id: newHospitalId,
+          description: "Hospital",
+        }),
+        req.header
+      );
+
+      console.log("Finished creating the constituent code...\n\n");
+
+      console.log(
+        `the new hospital has been created and we are creating the relationship`
+      );
+
+      await createRelationship(
+        JSON.stringify({
+          constituent_id: newHospitalId,
+          reciprocal_type: "Hospital",
+          relation_id: req.query.id,
+          type: "Patient",
+        }),
+        req.header
+      );
+    } else {
+      console.log(
+        `The hospital existed and we are creating the relationship\n\n`
+      );
+      await createRelationship(
+        JSON.stringify({
+          constituent_id: hospitalInfo.id,
+          reciprocal_type: "Hospital",
+          relation_id: req.query.id,
+          type: "Patient",
+        }),
+        req.header
+      );
+    }
   }
+
+  console.log(
+    `Working on social Worker: ${JSON.stringify(socialWorkerRelationship)}\n\n`
+  );
+
+  if (socialWorkerRelationship.update) {
+    
+    if (socialWorkerRelationship.relation_id !== "") {
+      console.log(
+        "It has been determined that the socialWorker relationship will be deleted, and a new one will be added. Deleting now...\n\n"
+      );
+      await deleteRelationship(
+        socialWorkerRelationship.relationship_id,
+        req.header
+      );
+    }
+    
+    
+    let socialWorkerInfo = await getConstituentFromEmail(
+      socialWorkerRelationship.value,
+      req.header
+    );
+
+    console.log(
+      `Retrieved the social worker's info and it is: ${JSON.stringify(
+        socialWorkerInfo
+      )}\n\n`
+    );
+
+    const error =
+      socialWorkerInfo !== undefined &&
+      typeof socialWorkerInfo === "object" &&
+      "status" in socialWorkerInfo &&
+      socialWorkerInfo.status === "error" &&
+      socialWorkerInfo.error === "User not found";
+
+    if (error) {
+      console.log(
+        `The social worker couldn't be found so not adding anything and sending back no update... the value of relationshipMessage should be: ${relationshipMessage}\n\n`
+      );
+      relationshipMessage +=
+        "Social worker couldn't be found, sent an email for them to create an account, try to connect with them later.\n\n";
+    } else {
+      console.log(
+        `The social worker was found, creating the relationship...\n\n`
+      );
+      await createRelationship(
+        JSON.stringify({
+          constituent_id: socialWorkerInfo.id,
+          reciprocal_type: "Social Worker",
+          relation_id: req.query.id,
+          type: "Patient",
+        }),
+        req.header
+      );
+    }
+  }
+  res.send({redirect: true, message: relationshipMessage});
 });
+
+//Get a social worker's info for the portal based off id
+app.get("/constituent/socialWorker", async (req, res) => {
+  console.log("Hit call to find social worker...\n\n");
+  const socialWorkerId = req.query.id;
+  const socialWorkerCompleteInfo = await getConstituentFromId(socialWorkerId, req.header);
+  console.log(`Complete info of social worker found: ${JSON.stringify(socialWorkerCompleteInfo)}\n\n`);
+  const {value: socialWorkerRelationships} = await getConstituentRelationships(socialWorkerId, req.header);
+
+  const hospitalRelationship = socialWorkerRelationships.find((relationship) => relationship.type === "Hospital");
+
+  console.log(`sending back: ${JSON.stringify({
+    first: socialWorkerCompleteInfo.first,
+    last: socialWorkerCompleteInfo.last,
+    email: {id: socialWorkerCompleteInfo.email.id, value: socialWorkerCompleteInfo.email.address},
+    hospital: hospitalRelationship !== undefined ? {id: hospitalRelationship.id, value: hospitalRelationship.name} : {id: "", value: ""},
+  })}\n\n`);
+
+  res.send({
+    first: socialWorkerCompleteInfo.first,
+    last: socialWorkerCompleteInfo.last,
+    email: {id: socialWorkerCompleteInfo.email.id, value: socialWorkerCompleteInfo.email.address},
+    hospital: hospitalRelationship !== undefined ? {id: hospitalRelationship.id, value: hospitalRelationship.name} : {id: "", value: ""},
+  })
+})
+
+// Gets an array of all patients of a social worker based off the social worker id
+app.get("/constituent/socialWorker/patients", async (req, res) => {
+  let returnVal = [];
+  let patientIds = [];
+  const socialWorkerId = req.query.id;
+
+  const {value: relationships} = await getConstituentRelationships(socialWorkerId, req.header);
+
+  relationships.forEach((relationship) => {
+    console.log(JSON.stringify(relationship))
+    if(relationship.type === "Patient") {
+      patientIds.push(relationship.relation_id);
+    }
+  });
+
+  console.log(patientIds);
+
+  const socialWorkerInfo = await getConstituentFromId(socialWorkerId, req.header);
+
+  Promise.all(patientIds.map(async (patientId) => {
+
+    const patientInfo = await getConstituentFromId(patientId, req.header);
+
+    const {value: patientCustomFields} = await getCustomFieldList(patientId, req.header);
+
+    const patientDiagnosis = patientCustomFields.find(customField => customField.category === "Current Diagnosis");
+
+    console.log(`Diagnosis: ${JSON.stringify(patientDiagnosis)}`);
+    const hospital = relationships.find(relationship => relationship.type === "Hospital");
+    console.log(`Hospital: ${JSON.stringify(hospital)}`);
+    const socialWorkerRelationshipToPatient = relationships.find(relationship => relationship.type === "Patient");
+    console.log(`relationship w social worker and patient: ${JSON.stringify(socialWorkerRelationshipToPatient)}`);
+    
+    patientInfo.diagnosis = {id: patientDiagnosis.id, value: patientDiagnosis.value};
+
+    patientInfo.hospital = {id: hospital.id, value: hospital.name};
+
+    patientInfo.socialWorker = {name: `${socialWorkerInfo.first} ${socialWorkerInfo.last}`, email: socialWorkerInfo.email.address, relationshipId: socialWorkerRelationshipToPatient.id};
+
+    return patientInfo;
+  }))
+  .then(values => {
+    values.forEach(value => returnVal.push(value))
+  })
+  .then(() => res.send({patients: returnVal}));
+})
+
 
 //Updates a LLB Service based off the service's id
 app.patch("/service/update", async (req, res) => {
@@ -1312,6 +1441,9 @@ app.post("/service/create", async (req, res) => {
   req.header["Content-Type"] = "application/json";
   const patientId = req.query.patientId;
   const parentId = req.query.parentId;
+  const socialWorkerId = req.query.socialWorkerId;
+  const patientName = req.query.patientName;
+
   const date = new Date();
   date.toISOString();
   const reqBody = {
@@ -1341,7 +1473,13 @@ app.post("/service/create", async (req, res) => {
     )}`
   );
 
-  res.redirect(`/p-portal/${parentId}/services?patientId=${patientId}`);
+  if(parentId !== undefined)
+  {
+    res.redirect(`/p-portal/${parentId}/services?patientId=${patientId}`);
+  }
+  else {
+    res.redirect(`/s-portal/${socialWorkerId}/patients/services?patientId=${patientId}&patientName=${patientName}`);
+  }
 });
 
 //Deletes a service
@@ -1351,6 +1489,131 @@ app.delete("/service/delete", (req, res) => {
     res.send({ message: response })
   );
 });
+
+//Deletes a relationship between social worker and patient
+app.delete("/constituent/socialWorker/deletePatient", (req, res) => {
+  const idOfRelationship = req.query.id;
+  deleteRelationship(idOfRelationship, req.header)
+  .then(() => res.send({redirect: true}));
+  
+})
+
+
+//Updates a social worker's info
+app.patch("/constituent/socialWorker/updateInfo", async (req, res) => {
+  req.header["Content-Type"] = "application/json";
+  
+  let email = req.body.email;
+  let hospitalRelationship = req.body.hospital;
+
+  let constituentBody = {
+    first: req.body.first,
+    last: req.body.last
+  };
+
+  //Updates the constituent
+
+  await updateConstituent(
+    req.query.id,
+    JSON.stringify(constituentBody),
+    req.header
+  );
+
+  //Updates the email
+  await updateConstituentEmail(
+    email.id,
+    JSON.stringify({ address: email.value }),
+    req.header
+  );
+
+  //Updates the hospital
+  if (hospitalRelationship.update) {
+    console.log("It has been determined that the hospital will be updated\n\n");
+    console.log(hospitalRelationship.relation_id);
+    if (hospitalRelationship.relation_id !== "") {
+      console.log(
+        "It has been determined that the hospital relationship will be deleted, and a new one will be added. Deleting now...\n\n"
+      );
+      await deleteRelationship(
+        hospitalRelationship.relationship_id,
+        req.header
+      );
+    }
+
+    let hospitalInfo = await getConstituentFromName(
+      hospitalRelationship.value,
+      req.header
+    );
+    console.log(
+      `The hospitalInfo has been retrieved and it is ${JSON.stringify(
+        hospitalInfo
+      )}`
+    );
+    const error =
+      hospitalInfo !== undefined &&
+      typeof hospitalInfo === "object" &&
+      "status" in hospitalInfo &&
+      hospitalInfo.status === "error" &&
+      hospitalInfo.error === "User not found";
+
+    if (error) {
+      let { id: newHospitalId } = await createConstituent(
+        JSON.stringify({
+          inactive: false,
+          name: hospitalRelationship.value,
+          type: "Organization",
+        }),
+        req.header
+      );
+
+      console.log(
+        `The new hospital has been created and the id is: ${newHospitalId}\n\n`
+      );
+
+      console.log("Creating the constituent code...\n\n");
+
+      await createConstituentCode(
+        JSON.stringify({
+          constituent_id: newHospitalId,
+          description: "Hospital",
+        }),
+        req.header
+      );
+
+      console.log("Finished creating the constituent code...\n\n");
+
+      console.log(
+        `the new hospital has been created and we are creating the relationship`
+      );
+
+      await createRelationship(
+        JSON.stringify({
+          constituent_id: newHospitalId,
+          reciprocal_type: "Hospital",
+          relation_id: req.query.id,
+          type: "Social Worker",
+        }),
+        req.header
+      );
+    } else {
+      console.log(
+        `The hospital existed and we are creating the relationship\n\n`
+      );
+      await createRelationship(
+        JSON.stringify({
+          constituent_id: hospitalInfo.id,
+          reciprocal_type: "Hospital",
+          relation_id: req.query.id,
+          type: "Social Worker",
+        }),
+        req.header
+      );
+    }
+  }
+
+  res.send({redirect: true});
+})
+
 
 //Starts server
 const start = async () => {

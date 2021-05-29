@@ -3,10 +3,11 @@ import { useParams } from "react-router";
 import { Link, useLocation } from "react-router-dom";
 import LLBService from "./Components/LLBService";
 
-function PatientServices() {
-  let { parentId } = useParams();
+function SocialWorkerPatientServices() {
+  let { socialWorkerId } = useParams();
   const search = useLocation().search;
   const patientId = new URLSearchParams(search).get("patientId");
+  const patientName = new URLSearchParams(search).get("patientName");
 
   let [state, setState] = useState("Loading");
 
@@ -30,16 +31,15 @@ function PatientServices() {
       <h1>Services Page</h1>
       <br />
       <br />
-      <Link to={`/p-portal/${parentId}`}>Family Info</Link>
+      <Link to={`/s-portal/${socialWorkerId}`}>Your Info</Link>
       <br />
       <br />
-      <Link to={`/p-portal/${parentId}/services?patientId=${patientId}`}>
-        Services
-      </Link>
+
+      <Link to={`/s-portal/${socialWorkerId}/patients`}>Patients</Link>
       <br />
       <br />
       <div>
-        <h1>Services: </h1>
+        <h1>{patientName} Services: </h1>
         <ul>
           <button
             onClick={() => {
@@ -119,7 +119,7 @@ function PatientServices() {
         </ul>
         <br />
         <br />
-        <Link to={`/p-portal/${parentId}/services/new?patientId=${patientId}`}>
+        <Link to={`/s-portal/${socialWorkerId}/patients/services/new?patientId=${patientId}&patientName=${patientName}`}>
           Add new service
         </Link>
       </div>
@@ -127,4 +127,4 @@ function PatientServices() {
   );
 }
 
-export default PatientServices;
+export default SocialWorkerPatientServices;

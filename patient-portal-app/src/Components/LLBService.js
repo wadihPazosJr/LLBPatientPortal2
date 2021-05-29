@@ -3,7 +3,6 @@ import Select from "react-select";
 
 function LLBService({
   description,
-  i,
   id,
   preferredRetailer,
   type,
@@ -11,7 +10,7 @@ function LLBService({
   status,
 }) {
   const [onEdit, setOnEdit] = useState(false);
-  console.log(preferredRetailer)
+  console.log(preferredRetailer);
   const [typeOfAssistance, setTypeOfAssistance] = useState({
     value: type,
     label: type,
@@ -66,9 +65,6 @@ function LLBService({
   if (onEdit) {
     return (
       <div>
-        <h3>
-          {i}. Request for {type}
-        </h3>
         <form onSubmit={handleSubmit}>
           <label>Type of Assistance</label>
           <br />
@@ -132,14 +128,11 @@ function LLBService({
   } else {
     return (
       <div>
-        <h3>
-          {i}. Request for {type}
-        </h3>
-        <h4>Status: {status}</h4>
+        <h4>Status: {status === "Completed" ? "Completed" : "In Progress"}</h4>
         <h4>Date service was requested: {requestDate}</h4>
         <h4>Preferred Retailer: {preferredRetailer.value}</h4>
         <h4>Additional Notes: {description}</h4>
-        <button onClick={handleEditServiceClick}>Edit Service</button>
+        {status !== "Completed" && <button onClick={handleEditServiceClick}>Edit Service</button>}
       </div>
     );
   }

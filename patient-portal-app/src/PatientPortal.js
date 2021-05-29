@@ -98,6 +98,7 @@ function PatientPortal() {
           diagnosis={state.patient.diagnosis}
           hospital={state.patient.hospital}
           socialWorker={state.socialWorker}
+          view="Patient"
         />
         <h1>Parent one:</h1>
         <ParentInfo
