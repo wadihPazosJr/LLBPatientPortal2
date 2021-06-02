@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import {Link} from 'react-router-dom';
 import SocialWorkerInfo from "./Components/SocialWorkerInfo";
+import LogoutButton from "./Components/LogoutButton";
 
 const SocialWorkerPortal = () => {
   let { socialWorkerId } = useParams();
@@ -13,13 +14,17 @@ const SocialWorkerPortal = () => {
       fetch(`/constituent/socialWorker?id=${socialWorkerId}`)
         .then((res) => res.json())
         .then((res) => {
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
           setState({
             first: res.first,
             last: res.last,
             email: res.email,
             hospital: res.hospital,
           });
-        });
+        }});
     };
 
     getSocialWorkerInfo();
@@ -44,6 +49,7 @@ const SocialWorkerPortal = () => {
         <Link to={`/s-portal/${socialWorkerId}/patients`}>Patients</Link>
         <br />
         <br />
+        <LogoutButton />
         <h1>Your Info:</h1>
         <SocialWorkerInfo id={socialWorkerId} first={state.first} last={state.last} email={state.email} hospital={state.hospital} />
       </div>

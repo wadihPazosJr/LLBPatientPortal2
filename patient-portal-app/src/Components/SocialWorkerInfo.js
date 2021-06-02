@@ -27,7 +27,9 @@ function SocialWorkerInfo(props) {
       hospital: {
         update: rightHospital !== hospital && hospital !== "",
         relationship_id:
-          rightHospital !== "" && props.hospital.id !== undefined? props.hospital.id : "",
+          rightHospital !== "" && props.hospital.id !== undefined
+            ? props.hospital.id
+            : "",
         methodToGetNewConstituent: "name",
         type: "Social Worker",
         reciprocal_type: "Hospital",
@@ -43,7 +45,12 @@ function SocialWorkerInfo(props) {
       .then((res) => res.json())
       .then((res) => {
         if (res.redirect) {
-          window.location.reload();
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message === "Success") {
+            window.location.reload();
+          }
         }
       });
   };

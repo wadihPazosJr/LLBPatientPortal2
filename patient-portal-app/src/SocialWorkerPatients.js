@@ -13,9 +13,9 @@ function SocialWorkerPatients() {
     const getPatients = () => {
       /* /constituent/socialWorker/patients?id=${socialWorkerId} */
       fetch(`/constituent/socialWorker/patients?id=${socialWorkerId}`)
-      .then(res => res.json())  
-      .then((res) => {
-            /* patient: {
+        .then((res) => res.json())
+        .then((res) => {
+          /* patient: {
               id: patient.id,
               address: {id: patient.address.id, value: `${patient.address.address_lines}, ${patient.address.city}, ${patient.address.state}, ${patient.address.country}`},
               postal_code: patient.address.postal_code,
@@ -26,25 +26,33 @@ function SocialWorkerPatients() {
               hospital: res.hospital,
             }, */
 
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
             const responsePatientArray = res.patients;
 
-            const patientArr = []
+            const patientArr = [];
 
-            responsePatientArray.forEach(patient => {
-                patientArr.push({
-                    id: patient.id,
-                    address: {id: patient.address.id, value: `${patient.address.address_lines}, ${patient.address.city}, ${patient.address.state}, ${patient.address.country}`},
-                    postal_code: patient.address.postal_code,
-                    birthdate: `${patient.birthdate.m}/${patient.birthdate.d}/${patient.birthdate.y}`,
-                    first:patient.first ,
-                    last: patient.last,
-                    diagnosis: patient.diagnosis,
-                    hospital: patient.hospital,
-                    socialWorker: patient.socialWorker
-                })
+            responsePatientArray.forEach((patient) => {
+              patientArr.push({
+                id: patient.id,
+                address: {
+                  id: patient.address.id,
+                  value: `${patient.address.address_lines}, ${patient.address.city}, ${patient.address.state}, ${patient.address.country}`,
+                },
+                postal_code: patient.address.postal_code,
+                birthdate: `${patient.birthdate.m}/${patient.birthdate.d}/${patient.birthdate.y}`,
+                first: patient.first,
+                last: patient.last,
+                diagnosis: patient.diagnosis,
+                hospital: patient.hospital,
+                socialWorker: patient.socialWorker,
+              });
             });
 
-            setState({ patients: patientArr })
+            setState({ patients: patientArr });
+          }
         });
     };
 
@@ -70,8 +78,6 @@ function SocialWorkerPatients() {
             state.patients.map((patient) => {
               return (
                 <li key={patient.id}>
-
-                    
                   <PatientInfo
                     id={patient.id}
                     first={patient.first}

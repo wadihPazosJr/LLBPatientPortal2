@@ -15,15 +15,20 @@ function PatientServices() {
 
   useEffect(() => {
     const getServices = () => {
-      fetch(`/constituent/services?id=${patientId}`)
+      fetch(`/services?id=${patientId}`)
         .then((res) => res.json())
         .then((res) => {
-          setState({ services: res });
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            setState({ services: res });
+          }
         });
     };
 
     getServices();
-  });
+  }, [patientId]);
 
   return (
     <div>

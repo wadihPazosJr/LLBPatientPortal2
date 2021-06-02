@@ -82,7 +82,7 @@ function PatientInfo(props) {
         type: "Patient",
         reciprocal_type: "Hospital",
         value: patientHospital,
-      }
+      },
     };
 
     console.log(
@@ -100,26 +100,38 @@ function PatientInfo(props) {
         console.log(
           `Finished the call of updating and the value of the response is ${res}`
         );
-        if (res.message !== "") {
-          alert(res.message);
-        }
+
         if (res.redirect) {
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message !== "") {
+            alert(res.message);
+          }
           window.location.reload();
         }
       });
   };
 
   const handleDeletePatient = () => {
-    fetch(`/constituent/socialWorker/deletePatient?id=${props.socialWorker.relationshipId}`, {
-      method: "DELETE"
-    })
-    .then(res => res.json())
-    .then(res => {
-      if(res.redirect) {
-        window.location.reload()
+    fetch(
+      `/constituent/socialWorker/deletePatient?id=${props.socialWorker.relationshipId}`,
+      {
+        method: "DELETE",
       }
-    })
-  }
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.redirect) {
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message === "Success") {
+            window.location.reload();
+          }
+        }
+      });
+  };
 
   if (onEdit) {
     return (
@@ -339,7 +351,9 @@ function PatientInfo(props) {
         <input type="submit" value="Update Info"></input>
         <br />
         <br />
-        {props.view === "Social Worker" && <button onClick={handleDeletePatient}>Delete Patient</button>}
+        {props.view === "Social Worker" && (
+          <button onClick={handleDeletePatient}>Delete Patient</button>
+        )}
         <br />
         <br />
         <button onClick={handleButtonClick}>Cancel</button>
@@ -358,8 +372,18 @@ function PatientInfo(props) {
         <li>Social worker name: {props.socialWorker.name}</li>
         <li>Social worker email: {props.socialWorker.email}</li>
         <button onClick={handleButtonClick}>Edit info</button>
-        <br/>
-        {props.view === "Social Worker" && <Link to={`/s-portal/${props.socialWorkerId}/patients/services?patientId=${props.id}&patientName=${`${props.first} ${props.last}`}`}>Patient's services</Link>}
+        <br />
+        {props.view === "Social Worker" && (
+          <Link
+            to={`/s-portal/${
+              props.socialWorkerId
+            }/patients/services?patientId=${
+              props.id
+            }&patientName=${`${props.first} ${props.last}`}`}
+          >
+            Patient's services
+          </Link>
+        )}
       </ul>
     );
   }

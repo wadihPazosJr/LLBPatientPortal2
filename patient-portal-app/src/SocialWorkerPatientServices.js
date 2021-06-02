@@ -16,15 +16,20 @@ function SocialWorkerPatientServices() {
 
   useEffect(() => {
     const getServices = () => {
-      fetch(`/constituent/services?id=${patientId}`)
+      fetch(`/services?id=${patientId}`)
         .then((res) => res.json())
         .then((res) => {
-          setState({ services: res });
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            setState({ services: res });
+          }
         });
     };
 
     getServices();
-  });
+  }, [socialWorkerId]);
 
   return (
     <div>
@@ -119,7 +124,9 @@ function SocialWorkerPatientServices() {
         </ul>
         <br />
         <br />
-        <Link to={`/s-portal/${socialWorkerId}/patients/services/new?patientId=${patientId}&patientName=${patientName}`}>
+        <Link
+          to={`/s-portal/${socialWorkerId}/patients/services/new?patientId=${patientId}&patientName=${patientName}`}
+        >
           Add new service
         </Link>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 function ParentInfo(props) {
-    const addressArr = props.address.value.split(", ");
+  const addressArr = props.address.value.split(", ");
   const [onEdit, setOnEdit] = useState(false);
   const [parentFirst, setParentFirst] = useState(props.first);
   const [parentLast, setParentLast] = useState(props.last);
@@ -20,44 +20,49 @@ function ParentInfo(props) {
   };
 
   const handleOnSubmit = (e) => {
-    console.log("Started submit")  
+    console.log("Started submit");
     e.preventDefault();
-      const reqBody = {
-        type: "Parent",
-        constituentInfo: {
-            first: parentFirst,
-            last: parentLast,
-            email: {id: props.email.id, value: parentEmail},
-            phone: {id: props.phone.id, value: parentPhone},
-            address: {
-                id: props.address.id,
-                address_lines: parentAddress,
-                city: parentCity,
-                state: parentState,
-                zip: parentZip,
-                country: parentCountry
-            },
+    const reqBody = {
+      type: "Parent",
+      constituentInfo: {
+        first: parentFirst,
+        last: parentLast,
+        email: { id: props.email.id, value: parentEmail },
+        phone: { id: props.phone.id, value: parentPhone },
+        address: {
+          id: props.address.id,
+          address_lines: parentAddress,
+          city: parentCity,
+          state: parentState,
+          zip: parentZip,
+          country: parentCountry,
         },
-        customFields: [
-            {
-              id: props.veteran.id,
-              value: parentVeteran
-            }
-        ]
-      };
+      },
+      customFields: [
+        {
+          id: props.veteran.id,
+          value: parentVeteran,
+        },
+      ],
+    };
 
-      fetch(`/constituent/updateParent?id=${props.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        
-        body: JSON.stringify(reqBody)
+    fetch(`/constituent/updateParent?id=${props.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+
+      body: JSON.stringify(reqBody),
     })
-        .then((res) => res.json())
-        .then((res) => {
-          if(res.redirect){
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.redirect) {
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message === "Success") {
             window.location.reload();
           }
-        });
+        }
+      });
   };
 
   if (onEdit) {
@@ -229,7 +234,7 @@ function ParentInfo(props) {
         </select>
         <br />
         <input type="submit" value="Update Info"></input>
-        <br/>
+        <br />
         <button onClick={handleButtonClick}>Cancel</button>
       </form>
     );

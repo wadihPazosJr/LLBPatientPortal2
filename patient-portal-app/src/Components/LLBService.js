@@ -29,7 +29,7 @@ function LLBService({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch(`/service/update?id=${id}`, {
+    fetch(`/services/update?id=${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -43,21 +43,31 @@ function LLBService({
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res.message === "Success") {
-          window.location.reload();
+        if (res.redirect) {
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message === "Success") {
+            window.location.reload();
+          }
         }
       });
     console.log("reloaded page and finished");
   };
 
   const deleteService = () => {
-    fetch(`/service/delete?id=${id}`, {
+    fetch(`/services/delete?id=${id}`, {
       method: "DELETE",
     })
       .then((res) => res.json())
       .then((res) => {
-        if (res.message === "successfully deleted action") {
-          window.location.reload();
+        if (res.redirect) {
+          alert(res.message);
+          window.location.href = res.redirect;
+        } else {
+          if (res.message === "successfully deleted action") {
+            window.location.reload();
+          }
         }
       });
   };
@@ -132,7 +142,9 @@ function LLBService({
         <h4>Date service was requested: {requestDate}</h4>
         <h4>Preferred Retailer: {preferredRetailer.value}</h4>
         <h4>Additional Notes: {description}</h4>
-        {status !== "Completed" && <button onClick={handleEditServiceClick}>Edit Service</button>}
+        {status !== "Completed" && (
+          <button onClick={handleEditServiceClick}>Edit Service</button>
+        )}
       </div>
     );
   }

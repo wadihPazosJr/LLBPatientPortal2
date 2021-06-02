@@ -14,27 +14,33 @@ function NewService() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const reqBody = JSON.stringify({
-        typeOfAssistance: typeOfAssistance.value,
-        preferredRetailer: preferredRetailer.value,
-        additionalNotes: additionalNotes
+      typeOfAssistance: typeOfAssistance.value,
+      preferredRetailer: preferredRetailer.value,
+      additionalNotes: additionalNotes,
     });
 
-    fetch(`/service/create?parentId=${parentId}&patientId=${patientId}`, {
+    fetch(`/services/create?parentId=${parentId}&patientId=${patientId}`, {
       method: "POST",
       body: reqBody,
       headers: { "Content-Type": "application/json" },
     })
-    .then((res) => {
+      .then((res) => res.json())
+      .then((res) => {
         console.log(res);
-        if (res.redirected) {
-          window.location.href = res.url;
-        } else {
-          return res.json();
+        if (res.redirect) {
+          if (res.message !== undefined) {
+            alert(res.message);
+          }
+          window.location.href = res.redirect;
         }
-    })
-    .catch((err) => {
+        else {
+          console.log("did not hit else block");
+          window.location.href = res.redirectUrl;
+        }
+      })
+      .catch((err) => {
         alert(err);
-    });
+      });
   };
 
   return (
@@ -47,7 +53,7 @@ function NewService() {
       <br />
       <Select
         value={typeOfAssistance}
-        onChange={option => setTypeOfAssistance(option)}
+        onChange={(option) => setTypeOfAssistance(option)}
         options={[
           { value: "Gas", label: "Gas" },
           { value: "Food", label: "Food" },
@@ -66,7 +72,7 @@ function NewService() {
       <br />
       <Select
         value={preferredRetailer}
-        onChange={option => setPreferredRetailer(option)}
+        onChange={(option) => setPreferredRetailer(option)}
         options={[
           { value: "Walmart", label: "Walmart" },
           { value: "Publix", label: "Publix" },
@@ -90,7 +96,7 @@ function NewService() {
         required
         name="additionalNotes"
         value={additionalNotes}
-        onChange={e => setAdditionalNotes(e.target.value)}
+        onChange={(e) => setAdditionalNotes(e.target.value)}
       ></textarea>
       <br />
       <br />
