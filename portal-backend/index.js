@@ -29,7 +29,7 @@ const client = new MongoClient(uri, {
 
 let database, collection;
 
-const cookieSession = require('cookie-session');
+const cookieSession = require("cookie-session");
 
 //Helper functions
 
@@ -160,10 +160,11 @@ function getValidAccessToken() {
 
 const isLoggedIn = (req, res, next) => {
   console.log(`req.user: ${req.user}`);
-  console.log(req.path)
+  console.log(req.path);
 
   if (
-    req.user !== undefined ||
+    (req.user !== undefined &&
+      req.user.email !== "User not found") ||
     (req.path === "/constituent/family" && req.method === "POST") ||
     req.path === "/constituent/constituentFromEmail" ||
     req.path === "/auth/google" ||
@@ -173,6 +174,9 @@ const isLoggedIn = (req, res, next) => {
     next();
   } else {
     console.log("hitting redirect");
+    if (req.user !== undefined && req.user.email === "User not found") {
+      req.logout();
+    }
     res.send({
       redirect: "http://localhost:3000/",
       message: "You must log in to use this service",
@@ -184,13 +188,12 @@ const isLoggedIn = (req, res, next) => {
 
 passport.serializeUser((user, done) => {
   console.log("Serializing user..." + JSON.stringify(user));
-  if(user.error !== undefined) {
-    console.log("Hitting this")
+  if (user.error !== undefined) {
+    console.log("Hitting this");
     user.email = user.error;
     done(null, user.email);
-  }
-  else {
-    console.log("Hitting this")
+  } else {
+    console.log("Hitting this");
     done(null, user.email);
   }
 });
@@ -215,7 +218,7 @@ passport.deserializeUser(async (email, done) => {
       });
   } */
 
-  done(null, {email: email});
+  done(null, { email: email });
 });
 
 passport.use(
@@ -237,7 +240,7 @@ passport.use(
             `logged in i have user ${JSON.stringify(user)} moving on to next`
           );
           //Need to figure out what to do if it isn't found
-            done(null, user);
+          done(null, user);
         })
         .catch((err) => {
           done(err.toString());
@@ -246,10 +249,12 @@ passport.use(
   )
 );
 
-app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2']
-}))
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["key1", "key2"],
+  })
+);
 
 app.use(passport.initialize());
 
@@ -258,8 +263,6 @@ app.use(passport.session());
 app.use(cors());
 
 app.use(express.json());
-
-
 
 //Adds SKY Api required headers to header of each request
 app.use(async (req, res, next) => {
@@ -273,16 +276,11 @@ app.use(async (req, res, next) => {
 
 //Parses the request body to Json
 
-
-
-
-
 // GET /auth/google/callback
 //   Use passport.authenticate() as route middleware to authenticate the
 //   request.  If authentication fails, the user will be redirected back to the
 //   login page.  Otherwise, the primary route function function will be called,
 //   which, in this example, will redirect the user to the home page.
-
 
 //Adds the routes
 app.all("*", isLoggedIn);
@@ -293,13 +291,11 @@ app.use("/constituent", ConstituentRoute);
 
 //Passport stuff
 
-
 // GET /auth/google
 //   Use passport.authenticate() as route middleware to authenticate the
 //   request.  The first step in Google authentication will involve
 //   redirecting the user to google.com.  After authorization, Google
 //   will redirect the user back to this application at /auth/google/callback
-
 
 app.get(
   "/auth/google",
@@ -316,10 +312,9 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/" }),
   function (req, res) {
     let user = req.user;
-    if(user.email === "User not found"){
+    if (user.email === "User not found") {
       res.redirect("http://localhost:3000/new-account");
-    }
-    else {
+    } else {
       res.redirect(`/constituent/constituentFromEmail?email=${user.email}`);
     }
   }

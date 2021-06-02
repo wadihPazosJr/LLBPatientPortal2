@@ -662,6 +662,16 @@ app.get("/constituentFromEmail", async (req, res) => {
         socialWorkerRelationship.value,
         req.header
       );
+
+      let socialWorkerConstituentCode;
+
+      if (socialWorkerInfo !== undefined && "error" in socialWorkerInfo) {
+        socialWorkerConstituentCode = "User wasn't found";
+      }
+      else {
+        let {value: socialWorkerConstituentCodes} = await getConsituentCodeListFromId(socialWorkerInfo.id, req.header);
+        socialWorkerConstituentCode = socialWorkerConstituentCodes.find(code => code.description === "Social Worker");
+      }
   
       console.log(
         `Retrieved the social worker's info and it is: ${JSON.stringify(
@@ -682,7 +692,10 @@ app.get("/constituentFromEmail", async (req, res) => {
         );
         relationshipMessage +=
           "Social worker couldn't be found, sent an email for them to create an account, try to connect with them later.\n\n";
-      } else {
+      } else if (socialWorkerConstituentCode === "User wasn't found" || socialWorkerConstituentCode === undefined) {
+        relationshipMessage+="Email provided wasn't a social worker, please provide an email of a valid social worker.\n\n";
+      }
+      else {
         console.log(
           `The social worker was found, creating the relationship...\n\n`
         );

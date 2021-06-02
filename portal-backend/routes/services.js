@@ -19,6 +19,7 @@ app.get("/", async (req, res) => {
     req.header
   );
   const actions = actionsResponse.value;
+  actions.forEach(action => console.log(JSON.stringify(action)));
 
   Promise.all(
     actions.map(async (action, i) => {
