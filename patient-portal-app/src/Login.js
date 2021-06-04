@@ -17,6 +17,10 @@ const Login = () => {
         window.location.href="http://localhost:5000/auth/facebook";
       }
 
+      const handleMicrosoftLogin = () => {
+        window.location.href= "http://localhost:5000/auth/microsoft";
+      }
+
       return (
           <div>
             <h1>Login:</h1>
@@ -27,6 +31,9 @@ const Login = () => {
             <br/>
             <br/>
             <button onClick={handleFacebookLogin}>Login with Facebook</button>
+            <br/>
+            <br/>
+            <button onClick={handleMicrosoftLogin}>Login with Microsoft</button>
             <br/>
             <br/> 
             <Link to="/new-account">Create a new account</Link>

@@ -14,8 +14,6 @@ var cors = require("cors");
 const ServicesRoute = require("./routes/services.js");
 const ConstituentRoute = require("./routes/constituent.js");
 
-
-
 const ConstitutuentModel = require("./models/constituentModel");
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -23,6 +21,9 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
 const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
+
+const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
+const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 
 const port = process.env.PORT || 5000;
 const DB_PASS = process.env.DB_PASS;
@@ -179,7 +180,9 @@ const isLoggedIn = (req, res, next) => {
     req.path === "/auth/facebook" ||
     req.path === "/auth/facebook/callback" ||
     req.path === "/" ||
-    req.path === "/constituent/socialWorker/create"
+    req.path === "/constituent/socialWorker/create" ||
+    req.path === "/auth/microsoft" ||
+    req.path === "/auth/microsoft/callback"
   ) {
     next();
   } else {
@@ -259,21 +262,33 @@ passport.use(
   )
 );
 
-/* passport.use(
+passport.use(
   new MicrosoftStrategy(
     {
-      clientID: "applicationidfrommicrosoft",
-      clientSecret: "applicationsecretfrommicrosoft",
-      callbackURL: "http://localhost:3000/auth/microsoft/callback",
+      clientID: MICROSOFT_CLIENT_ID,
+      clientSecret: MICROSOFT_CLIENT_SECRET,
+      callbackURL: "http://localhost:5000/auth/microsoft/callback",
       scope: ["user.read"],
     },
-    function (accessToken, refreshToken, profile, done) {
-      User.findOrCreate({ userId: profile.id }, function (err, user) {
-        return done(err, user);
-      });
+    async (accessToken, refreshToken, profile, done) => {
+      console.log(profile);
+      ConstitutuentModel.getConstituentFromEmail(profile._json.userPrincipalName, {
+        "Bb-Api-Subscription-Key": SUBSCRIPTION_KEY,
+        Authorization: `Bearer ${await getValidAccessToken()}`,
+      })
+        .then((user) => {
+          console.log(
+            `logged in i have user ${JSON.stringify(user)} moving on to next`
+          );
+          //Need to figure out what to do if it isn't found
+          done(null, user);
+        })
+        .catch((err) => {
+          done(err.toString());
+        });
     }
   )
-); */
+);
 
 passport.use(
   new FacebookStrategy(
@@ -281,7 +296,7 @@ passport.use(
       clientID: FACEBOOK_APP_ID,
       clientSecret: FACEBOOK_APP_SECRET,
       callbackURL: "http://localhost:5000/auth/facebook/callback",
-      profileFields: ['id', 'email']
+      profileFields: ["id", "email"],
     },
     async (accessToken, refreshToken, profile, done) => {
       console.log(profile);
@@ -377,13 +392,30 @@ app.get(
 app.get(
   "/auth/facebook",
   passport.authenticate("facebook", {
-    scope: ["email", "public_profile"]
+    scope: ["email", "public_profile"],
   })
 );
 
 app.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/" }),
+  function (req, res) {
+    let user = req.user;
+    if (user.email === "User not found") {
+      res.redirect("http://localhost:3000/new-account");
+    } else {
+      res.redirect(`/constituent/constituentFromEmail?email=${user.email}`);
+    }
+  }
+);
+
+app.get("/auth/microsoft", passport.authenticate("microsoft"/* , {
+  scope: ["email"]
+} */));
+
+app.get(
+  "/auth/microsoft/callback",
+  passport.authenticate("microsoft", { failureRedirect: "/" }),
   function (req, res) {
     let user = req.user;
     if (user.email === "User not found") {
