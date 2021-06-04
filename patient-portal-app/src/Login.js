@@ -13,13 +13,21 @@ const Login = () => {
         window.location.href="http://localhost:5000/auth/google";
       }
 
+      const handleFacebookLogin = () => {
+        window.location.href="http://localhost:5000/auth/facebook";
+      }
+
       return (
           <div>
             <h1>Login:</h1>
 
             <br/>
-            
+            <br/>
             <button onClick={handleGoogleLogin}>Login with Google</button>
+            <br/>
+            <br/>
+            <button onClick={handleFacebookLogin}>Login with Facebook</button>
+            <br/>
             <br/> 
             <Link to="/new-account">Create a new account</Link>
           </div>

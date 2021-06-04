@@ -20,19 +20,6 @@ const CreateAccount = () => {
   const [parentOneCountry, setParentOneCountry] = useState();
   const [parentOneVeteran, setParentOneVeteran] = useState();
 
-  const [parentTwoFirst, setParentTwoFirst] = useState();
-  const [parentTwoLast, setParentTwoLast] = useState();
-  const [parentTwoGender, setParentTwoGender] = useState();
-  const [parentTwoEthnicity, setParentTwoEthnicity] = useState();
-  const [parentTwoEmail, setParentTwoEmail] = useState();
-  const [parentTwoPhone, setParentTwoPhone] = useState();
-  const [parentTwoAddress, setParentTwoAddress] = useState();
-  const [parentTwoCity, setParentTwoCity] = useState();
-  const [parentTwoState, setParentTwoState] = useState();
-  const [parentTwoZip, setParentTwoZip] = useState();
-  const [parentTwoCountry, setParentTwoCountry] = useState();
-  const [parentTwoVeteran, setParentTwoVeteran] = useState();
-
   const [patientFirst, setPatientFirst] = useState();
   const [patientLast, setPatientLast] = useState();
   const [patientGender, setPatientGender] = useState();
@@ -74,7 +61,7 @@ const CreateAccount = () => {
         type: "Individual",
         inactive: false,
       },
-      parents: [
+      parent:
         {
           address: {
             address_lines: parentOneAddress,
@@ -98,34 +85,10 @@ const CreateAccount = () => {
           type: "Individual",
           inactive: false,
         },
-        {
-          address: {
-            address_lines: parentTwoAddress,
-            city: parentTwoCity,
-            state: parentTwoState,
-            country: parentTwoCountry,
-            postal_code: parentTwoZip,
-            type: "Home",
-          },
-          email: {
-            address: parentTwoEmail,
-            type: "Email",
-          },
-          first: parentTwoFirst,
-          gender: parentTwoGender,
-          last: parentTwoLast,
-          phone: {
-            number: parentTwoPhone,
-            type: "None",
-          },
-          type: "Individual",
-          inactive: false,
-        },
-      ],
       hospitalName: patientHospital,
       socialWorkerEmail: patientSocialWorker,
       diagnosis: patientDiagnosis,
-      veteran: [parentOneVeteran, parentTwoVeteran],
+      veteran: parentOneVeteran,
     };
   };
 
@@ -356,200 +319,6 @@ const CreateAccount = () => {
           <option value="No">No</option>
         </select>
         <br />
-        <h2>Parent two (optional)</h2>
-        <label>First Name:</label>
-        <br />
-        <input
-          required
-          name="parentTwoFirst"
-          type="text"
-          value={parentTwoFirst}
-          onChange={(e) => setParentTwoFirst(e.target.value)}
-        />
-        <br />
-        <label>Last Name:</label>
-        <br />
-        <input
-          required
-          name="parentTwoLast"
-          type="text"
-          value={parentTwoLast}
-          onChange={(e) => setParentTwoLast(e.target.value)}
-        />
-        <br />
-        <label>Gender:</label>
-        <br />
-        <select
-          required
-          name="parentTwoGender"
-          value={parentTwoGender}
-          onChange={(e) => setParentTwoGender(e.target.value)}
-        >
-          <option value="">Prefer not to say</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-        <br />
-
-        <label>Ethnicity:</label>
-        <br />
-        <select
-          required
-          name="parentTwoEthnicity"
-          value={parentTwoEthnicity}
-          onChange={(e) => setParentTwoEthnicity(e.target.value)}
-        >
-          <option value="">Other</option>
-          <option value="African American/African Black/Caribbean">
-            African American/African Black/Caribbean
-          </option>
-          <option value="Asian">Asian</option>
-          <option value="Caucasion">Caucasion</option>
-          <option value="Hispanic/Latino">Hispanic/Latino</option>
-          <option value="Native American">Native American</option>
-        </select>
-        <br />
-        <label>Email address:</label>
-        <br />
-        <input
-          required
-          name="parentTwoEmail"
-          type="text"
-          value={parentTwoEmail}
-          onChange={(e) => setParentTwoEmail(e.target.value)}
-        />
-        <br />
-        <label>Phone Number (must be in following format: xxx-xxx-xxxx):</label>
-        <br />
-        <input
-          required
-          name="parentTwoPhone"
-          type="text"
-          value={parentTwoPhone}
-          onChange={(e) => setParentTwoPhone(e.target.value)}
-        />
-        <br />
-        <label>address</label>
-        <br />
-        <input
-          required
-          name="parentTwoAddress"
-          type="text"
-          value={parentTwoAddress}
-          onChange={(e) => setParentTwoAddress(e.target.value)}
-        />
-        <br />
-        <label>city</label>
-        <br />
-        <input
-          required
-          name="parentTwoCity"
-          type="text"
-          value={parentTwoCity}
-          onChange={(e) => setParentTwoCity(e.target.value)}
-        />
-        <br />
-        <label>State</label>
-        <br/>
-        <select
-          required
-          name="parentTwoState"
-          value={parentTwoState}
-          onChange={(e) => setParentTwoState(e.target.value)}
-        >
-          <option value="">Please select a state</option>
-          <option value="AL">Alabama</option>
-          <option value="AK">Alaska</option>
-          <option value="AZ">Arizona</option>
-          <option value="AR">Arkansas</option>
-          <option value="CA">California</option>
-          <option value="CO">Colorado</option>
-          <option value="CT">Connecticut</option>
-          <option value="DE">Delaware</option>
-          <option value="DC">District Of Columbia</option>
-          <option value="FL">Florida</option>
-          <option value="GA">Georgia</option>
-          <option value="HI">Hawaii</option>
-          <option value="ID">Idaho</option>
-          <option value="IL">Illinois</option>
-          <option value="IN">Indiana</option>
-          <option value="IA">Iowa</option>
-          <option value="KS">Kansas</option>
-          <option value="KY">Kentucky</option>
-          <option value="LA">Louisiana</option>
-          <option value="ME">Maine</option>
-          <option value="MD">Maryland</option>
-          <option value="MA">Massachusetts</option>
-          <option value="MI">Michigan</option>
-          <option value="MN">Minnesota</option>
-          <option value="MS">Mississippi</option>
-          <option value="MO">Missouri</option>
-          <option value="MT">Montana</option>
-          <option value="NE">Nebraska</option>
-          <option value="NV">Nevada</option>
-          <option value="NH">New Hampshire</option>
-          <option value="NJ">New Jersey</option>
-          <option value="NM">New Mexico</option>
-          <option value="NY">New York</option>
-          <option value="NC">North Carolina</option>
-          <option value="ND">North Dakota</option>
-          <option value="OH">Ohio</option>
-          <option value="OK">Oklahoma</option>
-          <option value="OR">Oregon</option>
-          <option value="PA">Pennsylvania</option>
-          <option value="RI">Rhode Island</option>
-          <option value="SC">South Carolina</option>
-          <option value="SD">South Dakota</option>
-          <option value="TN">Tennessee</option>
-          <option value="TX">Texas</option>
-          <option value="UT">Utah</option>
-          <option value="VT">Vermont</option>
-          <option value="VA">Virginia</option>
-          <option value="WA">Washington</option>
-          <option value="WV">West Virginia</option>
-          <option value="WI">Wisconsin</option>
-          <option value="WY">Wyoming</option>
-          <option value="AS">American Samoa</option>
-          <option value="GU">Guam</option>
-          <option value="MP">Northern Mariana Islands</option>
-          <option value="PR">Puerto Rico</option>
-          <option value="UM">United States Minor Outlying Islands</option>
-          <option value="VI">Virgin Islands</option>
-        </select>
-        <br />
-        <label>zip code</label>
-        <br />
-        <input
-          required
-          name="parentTwoZip"
-          type="text"
-          value={parentTwoZip}
-          onChange={(e) => setParentTwoZip(e.target.value)}
-        />
-        <br />
-
-        <label>country</label>
-        <br />
-        <input
-          required
-          name="parentTwoCountry"
-          type="text"
-          value={parentTwoCountry}
-          onChange={(e) => setParentTwoCountry(e.target.value)}
-        />
-        <br />
-        <label>Are you a veteran?</label>
-        <br />
-        <select
-          required
-          name="parentTwoVeteran"
-          value={parentTwoVeteran}
-          onChange={(e) => setParentTwoVeteran(e.target.value)}
-        >
-          <option value="">Select an option</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
         <br />
         <h1>Patient or child info</h1>
         <label>First Name:</label>

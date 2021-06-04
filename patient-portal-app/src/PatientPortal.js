@@ -20,9 +20,7 @@ function PatientPortal() {
             window.location.href = res.redirect;
           } else {
             const patient = res.patient;
-            const parentOne = res.parents[0];
-            const parentTwo =
-              res.parents.length === 2 ? res.parents[1] : res.parents[0];
+            const parentOne = res.parent;
             const socialWorker =
               res.socialWorker !== "" ? res.socialWorker : "";
 
@@ -44,49 +42,25 @@ function PatientPortal() {
                 hospital: res.hospital,
               },
 
-              parents: [
-                {
-                  id: parentOne.id,
-                  address: {
-                    id: parentOne.address.id,
-                    value: `${parentOne.address.address_lines}, ${parentOne.address.city}, ${parentOne.address.state}, ${parentOne.address.country}`,
-                  },
-                  postal_code: parentOne.address.postal_code,
-                  email: {
-                    id: parentOne.email.id,
-                    value: parentOne.email.address,
-                  },
-                  first: parentOne.first,
-                  last: parentOne.last,
-                  phone: {
-                    id: parentOne.phone.id,
-                    value: parentOne.phone.number,
-                  },
-                  veteran: res.veteran[0],
+              parent: {
+                id: parentOne.id,
+                address: {
+                  id: parentOne.address.id,
+                  value: `${parentOne.address.address_lines}, ${parentOne.address.city}, ${parentOne.address.state}, ${parentOne.address.country}`,
                 },
-                {
-                  id: parentTwo.id,
-                  address: {
-                    id: parentTwo.address.id,
-                    value: `${parentTwo.address.address_lines}, ${parentTwo.address.city}, ${parentTwo.address.state}, ${parentTwo.address.country}`,
-                  },
-                  postal_code: parentTwo.address.postal_code,
-                  email: {
-                    id: parentTwo.email.id,
-                    value: parentTwo.email.address,
-                  },
-                  first: parentTwo.first,
-                  gender: parentTwo.gender,
-                  last: parentTwo.last,
-                  phone: {
-                    id: parentTwo.phone.id,
-                    value: parentTwo.phone.number,
-                  },
-                  veteran:
-                    res.veteran.length >= 1 ? res.veteran[1] : res.veteran[0],
+                postal_code: parentOne.address.postal_code,
+                email: {
+                  id: parentOne.email.id,
+                  value: parentOne.email.address,
                 },
-              ],
-
+                first: parentOne.first,
+                last: parentOne.last,
+                phone: {
+                  id: parentOne.phone.id,
+                  value: parentOne.phone.number,
+                },
+                veteran: res.veteran,
+              },
               socialWorker:
                 socialWorker !== ""
                   ? {
@@ -142,25 +116,14 @@ function PatientPortal() {
         />
         <h1>Parent one:</h1>
         <ParentInfo
-          id={state.parents[0].id}
-          first={state.parents[0].first}
-          last={state.parents[0].last}
-          address={state.parents[0].address}
-          postal_code={state.parents[0].postal_code}
-          email={state.parents[0].email}
-          phone={state.parents[0].phone}
-          veteran={state.parents[0].veteran}
-        />
-        <h1>Parent two:</h1>
-        <ParentInfo
-          id={state.parents[1].id}
-          first={state.parents[1].first}
-          last={state.parents[1].last}
-          address={state.parents[1].address}
-          postal_code={state.parents[1].postal_code}
-          email={state.parents[1].email}
-          phone={state.parents[1].phone}
-          veteran={state.parents[1].veteran}
+          id={state.parent.id}
+          first={state.parent.first}
+          last={state.parent.last}
+          address={state.parent.address}
+          postal_code={state.parent.postal_code}
+          email={state.parent.email}
+          phone={state.parent.phone}
+          veteran={state.parent.veteran}
         />
       </div>
     );

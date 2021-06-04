@@ -9,6 +9,7 @@ import NewService from './NewService'
 import SocialWorkerPatients from './SocialWorkerPatients'
 import SocialWorkerPatientServices from './SocialWorkerPatientServices'
 import SocialWorkerPatientNewService from './SocialWorkerPatientNewService'
+import NewSocialWorker from './NewSocialWorker'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route exact path="/s-portal/:socialWorkerId/patients/services" component={SocialWorkerPatientServices}/>
           <Route exact path="/p-portal/:parentId/services" component={PatientServices}/>
           <Route exact path="/p-portal/:parentId/services/new" component={NewService}/>
+          <Route exact path="/new-s-worker/:patientId/:swEmail" component={NewSocialWorker}/>
         </Switch>
       </Router>
     </div>
