@@ -1,108 +1,217 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
 import { useLocation } from "react-router-dom";
-import Select from "react-select";
+import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 
 function NewService() {
   const search = useLocation().search;
   const { parentId } = useParams();
   const patientId = new URLSearchParams(search).get("patientId");
-  const [additionalNotes, setAdditionalNotes] = useState();
-  const [preferredRetailer, setPreferredRetailer] = useState();
-  const [typeOfAssistance, setTypeOfAssistance] = useState();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const reqBody = JSON.stringify({
-      typeOfAssistance: typeOfAssistance.value,
-      preferredRetailer: preferredRetailer.value,
-      additionalNotes: additionalNotes,
-    });
+  const [state, setState] = useState({
+    additionalNotes: "",
+    preferredRetailer: "",
+    typeOfAssistance: "",
+    preferredRetailerIsOther: false,
+  });
 
-    fetch(`/services/create?parentId=${parentId}&patientId=${patientId}`, {
-      method: "POST",
-      body: reqBody,
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        console.log(res);
-        if (res.redirect) {
-          if (res.message !== undefined) {
-            alert(res.message);
-          }
-          window.location.href = res.redirect;
-        }
-        else {
-          console.log("did not hit else block");
-          window.location.href = res.redirectUrl;
-        }
-      })
-      .catch((err) => {
-        alert(err);
-      });
+  const [bill, setBill] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e) => {
+    let oldState = { ...state };
+    oldState[e.target.name] = e.target.value;
+    setState(oldState);
   };
 
-  return (
-    <form onSubmit={handleSubmit}>
-      <h1>Request new Service: </h1>
-      <br />
-      <br />
-      <label>Type of Assistance</label>
-      <br />
-      <br />
-      <Select
-        value={typeOfAssistance}
-        onChange={(option) => setTypeOfAssistance(option)}
-        options={[
-          { value: "Gas", label: "Gas" },
-          { value: "Food", label: "Food" },
-          { value: "Utilities", label: "Utilities" },
-          { value: "Transportation", label: "Transportation" },
-          { value: "Medical Co-payments", label: "Medical Co-payments" },
-          { value: "Other", label: "Other" },
-        ]}
-        name="preferredRetailer"
-        placeholder="Select a type of assistance"
-      />
-      <br />
-      <br />
-      <label>Preferred Retailer</label>
-      <br />
-      <br />
-      <Select
-        value={preferredRetailer}
-        onChange={(option) => setPreferredRetailer(option)}
-        options={[
-          { value: "Walmart", label: "Walmart" },
-          { value: "Publix", label: "Publix" },
-          { value: "Exxon/Mobil Gas", label: "Exxon/Mobil Gas" },
-          { value: "Chevron/Texaco Gas", label: "Chevron/Texaco Gas" },
-          { value: "Shell", label: "Shell" },
-          { value: "Other", label: "Other" },
-        ]}
-        name="preferredRetailer"
-        placeholder="Select a preferred retailer"
-      />
-      <br />
-      <br />
-      <h3>Please be specific if you chose other for type of assistance</h3>
-      <br />
-      <br />
-      <label>Additional Notes</label>
-      <br />
-      <br />
-      <textarea
-        required
-        name="additionalNotes"
-        value={additionalNotes}
-        onChange={(e) => setAdditionalNotes(e.target.value)}
-      ></textarea>
-      <br />
-      <br />
-      <input type="submit" value="Add new service"></input>
-    </form>
-  );
+  const handleSubmit = async (e) => {
+    //Need to put status to loading, and create the file with blackbaud and get the id.
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (bill !== "") {
+      const formData = new FormData();
+      formData.append("file", bill); // appending file
+
+      let fileId, fileName;
+
+      await fetch("/services/createFile", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            fileId = res.file_id;
+            fileName = res.file_name;
+          }
+        });
+
+      console.log(
+        `Starting to create action: ${fileId}, ${fileName}, ${JSON.stringify({
+          additionalNotes: state.additionalNotes,
+          typeOfAssistance: state.typeOfAssistance,
+          fileInfo: { file_id: fileId, file_name: fileName },
+        })}`
+      );
+      fetch(`/services/create?patientId=${patientId}&parentId=${parentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          additionalNotes: state.additionalNotes,
+          typeOfAssistance: state.typeOfAssistance,
+          fileInfo: { file_id: fileId, file_name: fileName },
+        }),
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            console.log("hit redirect should redirect to: " + res.redirectUrl);
+            window.location.href = res.redirectUrl;
+          }
+        });
+    } else {
+      fetch(`/services/create?patientId=${patientId}&parentId=${parentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          additionalNotes: state.additionalNotes,
+          typeOfAssistance: state.typeOfAssistance,
+          preferredRetailer: state.preferredRetailer,
+        }),
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            window.location.href = res.redirectUrl;
+          }
+        });
+    }
+  };
+
+  if (isLoading) {
+    return <p>Please wait...</p>;
+  } else {
+    return (
+      <form onSubmit={handleSubmit}>
+        <h1>Request new Service: </h1>
+        <br />
+        <br />
+        <DropDownListComponent
+          id="ddlelement"
+          dataSource={[
+            "Gas",
+            "Food",
+            "Utilities",
+            "Mortgage/Rent",
+            "Transportation",
+            "Medical Co-payments",
+            "Funeral/Memorial",
+            "Other",
+          ]}
+          placeholder="Select a Type of Assistance"
+          value={state.typeOfAssistance}
+          change={(e) => {
+            let oldState = { ...state };
+            oldState.typeOfAssistance = e.value;
+            setState(oldState);
+          }}
+        />
+        <br />
+        <br />
+        {state.typeOfAssistance === "Gas" && (
+          <DropDownListComponent
+            id="ddlelement"
+            dataSource={[
+              "Exxon/Mobil Gas",
+              "Chevron/Texaco Gas",
+              "Shell",
+              "Walmart",
+              "Other",
+            ]}
+            placeholder="Select a Preferred Retailer"
+            value={state.preferredRetailer}
+            change={(e) => {
+              let oldState = { ...state };
+              oldState.preferredRetailer = e.value !== "Other" ? e.value : "";
+              if (e.value === "Other") {
+                oldState.preferredRetailerIsOther = true;
+              }
+              setState(oldState);
+            }}
+          />
+        )}
+        {state.typeOfAssistance === "Food" && (
+          <DropDownListComponent
+            id="ddlelement"
+            dataSource={["Publix", "Walmart", "Kroger", "Target", "Other"]}
+            placeholder="Select a Preferred Retailer"
+            value={state.preferredRetailer}
+            change={(e) => {
+              let oldState = { ...state };
+              oldState.preferredRetailer = e.value !== "Other" ? e.value : "";
+              if (e.value === "Other") {
+                oldState.preferredRetailerIsOther = true;
+              }
+              setState(oldState);
+            }}
+          />
+        )}
+
+        {state.preferredRetailerIsOther && state.preferredRetailer === "" && (
+          <input
+            required
+            name="otherPreferredRetailer"
+            type="text"
+            className="e-input"
+            value={state.preferredRetailer}
+            onChange={handleChange}
+            placeholder="Please specify your preferred retailer"
+          />
+        )}
+
+        {state.typeOfAssistance !== "Gas" &&
+          state.typeOfAssistance !== "Food" &&
+          state.typeOfAssistance !== "" && (
+            <div>
+              <h3>Please upload the bill</h3>
+              <input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files[0]; // accessing file
+                  console.log(file);
+                  setBill(file);
+                }}
+              />
+            </div>
+          )}
+        <br />
+        <br />
+
+        {(state.preferredRetailer !== "" || bill !== "") && (
+          <textarea
+            name="additionalNotes"
+            value={state.additionalNotes}
+            onChange={handleChange}
+            placeholder="Please specify any additional notes pertaining to your request. If you chose other, please use this section to be more specific."
+          ></textarea>
+        )}
+        <br />
+        <br />
+        <input type="submit" value="Add new service"></input>
+      </form>
+    );
+  }
 }
 
 export default NewService;

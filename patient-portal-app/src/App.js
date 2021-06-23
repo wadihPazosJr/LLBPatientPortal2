@@ -10,6 +10,7 @@ import SocialWorkerPatients from './SocialWorkerPatients'
 import SocialWorkerPatientServices from './SocialWorkerPatientServices'
 import SocialWorkerPatientNewService from './SocialWorkerPatientNewService'
 import NewSocialWorker from './NewSocialWorker'
+import './App.css';
 
 function App() {
   return (
@@ -32,4 +33,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

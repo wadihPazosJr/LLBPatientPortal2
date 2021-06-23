@@ -91,6 +91,7 @@ function PatientServices() {
                       requestDate={requestDate}
                       preferredRetailer={service.preferredRetailer}
                       description={service.description}
+                      attachment={service.attachment}
                     />
                   </li>
                 );
@@ -117,6 +118,7 @@ function PatientServices() {
                       requestDate={requestDate}
                       preferredRetailer={service.preferredRetailer}
                       description={service.description}
+                      attachment={service.attachment}
                     />
                   </li>
                 );

@@ -8,6 +8,8 @@ const GoogleStrategy = require("passport-google-oauth").OAuth2Strategy;
 const MicrosoftStrategy = require("passport-microsoft").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 
+const fileupload = require("express-fileupload");
+
 const app = express();
 var cors = require("cors");
 
@@ -142,9 +144,7 @@ function getValidAccessToken() {
   return new Promise(async (resolve, reject) => {
     let accessToken;
     let accessExpiresOn;
-    const result = await collection
-      .findOne({ purpose: "oauth" })
-      .catch((err) => {
+    const result = await collection.findOne({ purpose: "oauth" }).catch((err) => {
         console.log(err);
         reject(err);
       });
@@ -182,7 +182,9 @@ const isLoggedIn = (req, res, next) => {
     req.path === "/" ||
     req.path === "/constituent/socialWorker/create" ||
     req.path === "/auth/microsoft" ||
-    req.path === "/auth/microsoft/callback"
+    req.path === "/auth/microsoft/callback" ||
+    req.path === "/constituent/constituentExists" ||
+    req.path === "/test"
   ) {
     next();
   } else {
@@ -272,10 +274,13 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       console.log(profile);
-      ConstitutuentModel.getConstituentFromEmail(profile._json.userPrincipalName, {
-        "Bb-Api-Subscription-Key": SUBSCRIPTION_KEY,
-        Authorization: `Bearer ${await getValidAccessToken()}`,
-      })
+      ConstitutuentModel.getConstituentFromEmail(
+        profile._json.userPrincipalName,
+        {
+          "Bb-Api-Subscription-Key": SUBSCRIPTION_KEY,
+          Authorization: `Bearer ${await getValidAccessToken()}`,
+        }
+      )
         .then((user) => {
           console.log(
             `logged in i have user ${JSON.stringify(user)} moving on to next`
@@ -330,6 +335,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(cors());
+
+app.use(fileupload());
 
 app.use(express.json());
 
@@ -409,9 +416,14 @@ app.get(
   }
 );
 
-app.get("/auth/microsoft", passport.authenticate("microsoft"/* , {
+app.get(
+  "/auth/microsoft",
+  passport.authenticate(
+    "microsoft" /* , {
   scope: ["email"]
-} */));
+} */
+  )
+);
 
 app.get(
   "/auth/microsoft/callback",

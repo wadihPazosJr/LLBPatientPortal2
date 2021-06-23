@@ -542,7 +542,7 @@ app.patch("/updatePatient", async (req, res) => {
   if (hospitalRelationship.update) {
     console.log("It has been determined that the hospital will be updated\n\n");
 
-    if (hospitalRelationship.relation_id !== "") {
+    if (hospitalRelationship.relationship_id !== "") {
       console.log(
         "It has been determined that the hospital relationship will be deleted, and a new one will be added. Deleting now...\n\n"
       );
@@ -822,7 +822,8 @@ app.get("/socialWorker/patients", async (req, res) => {
         value: patientDiagnosis.value,
       };
 
-      patientInfo.hospital = { id: hospital.id, value: hospital.name };
+
+      patientInfo.hospital = hospital !== undefined ? { id: hospital.id, value: hospital.name } : { id: "", value: "" };
 
       patientInfo.socialWorker = {
         name: `${socialWorkerInfo.first} ${socialWorkerInfo.last}`,
@@ -850,6 +851,7 @@ app.delete("/socialWorker/deletePatient", (req, res) => {
 //Creates a social worker account
 app.post("/socialWorker/create", async (req, res) => {
   const patientId = req.query.id;
+  req.header["Content-Type"] = "application/json";
   const { id: newSocialWorkerId } = await createConstituent(
     JSON.stringify({
       first: req.body.first,
@@ -858,6 +860,8 @@ app.post("/socialWorker/create", async (req, res) => {
         address: req.body.email,
         type: "Email",
       },
+      type: "Individual",
+      inactive: false
     }),
     req.header
   );
@@ -901,7 +905,7 @@ app.post("/socialWorker/create", async (req, res) => {
     let { id: newHospitalId } = await createConstituent(
       JSON.stringify({
         inactive: false,
-        name: "",
+        name: req.body.hospital,
         type: "Organization",
       }),
       req.header
@@ -1068,5 +1072,16 @@ app.patch("/socialWorker/updateInfo", async (req, res) => {
 
   res.send({ message: "Success" });
 });
+
+//Returns whether a constituent already exists by email
+app.get("/constituentExists", async (req, res) => {
+  const email = req.query.email;
+
+  let constituentResult = await getConstituentFromEmail(email, req.header);
+
+  let constituentExists = constituentResult !== undefined && "id" in constituentResult;
+
+  res.send({constituentExists: constituentExists});
+})
 
 module.exports = app;

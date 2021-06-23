@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Select from "react-select";
+import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 
 function LLBService({
   description,
@@ -8,6 +9,7 @@ function LLBService({
   type,
   requestDate,
   status,
+  attachment,
 }) {
   const [onEdit, setOnEdit] = useState(false);
   console.log(preferredRetailer);
@@ -16,43 +18,137 @@ function LLBService({
     label: type,
   });
 
-  const [preferredRetailerNew, setPreferredRetailerNew] = useState({
-    value: preferredRetailer.value,
-    label: preferredRetailer.value,
-  });
+  const [preferredRetailerNew, setPreferredRetailerNew] = useState(
+    preferredRetailer.value
+  );
   const [additionalNotes, setAdditionalNotes] = useState(description);
 
+  const [newAttachment, setNewAttachment] = useState(attachment);
+
+  const [updateAttachment, setUpdateAttachment] = useState(false);
+
+  const [preferredRetailerIsOther, setPreferredRetailerIsOther] =
+    useState(false);
+
+  const rightPreferredRetailers = () => {
+    if (type === "Gas") {
+      return [
+        "Exxon/Mobil Gas",
+        "Chevron/Texaco Gas",
+        "Shell",
+        "Walmart",
+        "Other",
+      ];
+    }
+
+    if (type === "Food") {
+      return ["Publix", "Walmart", "Kroger", "Target", "Other"];
+    }
+  };
   const handleEditServiceClick = (e) => {
     const currentOnEdit = onEdit;
     setOnEdit(!currentOnEdit);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    fetch(`/services/update?id=${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        typeOfAssistance: typeOfAssistance,
-        preferredRetailer: {
-          id: preferredRetailer.id,
-          value: preferredRetailerNew.value,
-        },
-        additionalNotes: additionalNotes,
-      }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.redirect) {
-          alert(res.message);
-          window.location.href = res.redirect;
-        } else {
-          if (res.message === "Success") {
-            window.location.reload();
+    if (preferredRetailer !== "") {
+      fetch(`/services/update?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          typeOfAssistance: typeOfAssistance,
+          preferredRetailer: {
+            id: preferredRetailer.id,
+            value: preferredRetailerNew,
+          },
+          additionalNotes: additionalNotes,
+        }),
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.redirect) {
+            alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            if (res.message === "Success") {
+              window.location.reload();
+            }
           }
-        }
-      });
-    console.log("reloaded page and finished");
+        });
+      console.log("reloaded page and finished");
+    }
+
+    if (attachment !== "") {
+      let fileId, fileName;
+      // create new file
+      if (updateAttachment) {
+        const formData = new FormData();
+        formData.append("file", newAttachment); // appending file
+
+        await fetch("/services/createFile", {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.redirect) {
+              alert(res.message);
+              window.location.href = res.redirect;
+            } else {
+              fileId = res.file_id;
+              fileName = res.file_name;
+            }
+          });
+
+        fetch(`/services/update?id=${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            typeOfAssistance: typeOfAssistance,
+            fileInfo: {
+              file_id: fileId,
+              file_name: fileName,
+              oldAttachmentId: attachment.id,
+            },
+            additionalNotes: additionalNotes,
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.redirect) {
+              alert(res.message);
+              window.location.href = res.redirect;
+            } else {
+              if (res.message === "Success") {
+                window.location.reload();
+              }
+            }
+          });
+        console.log("reloaded page and finished");
+      } else {
+        fetch(`/services/update?id=${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            typeOfAssistance: typeOfAssistance,
+            additionalNotes: additionalNotes,
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.redirect) {
+              alert(res.message);
+              window.location.href = res.redirect;
+            } else {
+              if (res.message === "Success") {
+                window.location.reload();
+              }
+            }
+          });
+        console.log("reloaded page and finished");
+      }
+    }
   };
 
   const deleteService = () => {
@@ -76,42 +172,66 @@ function LLBService({
     return (
       <div>
         <form onSubmit={handleSubmit}>
-          <label>Type of Assistance</label>
+          <h1>Type of assistance: {typeOfAssistance.value}</h1>
           <br />
           <br />
-          <Select
-            value={typeOfAssistance}
-            onChange={(option) => setTypeOfAssistance(option)}
-            options={[
-              { value: "Gas", label: "Gas" },
-              { value: "Food", label: "Food" },
-              { value: "Utilities", label: "Utilities" },
-              { value: "Transportation", label: "Transportation" },
-              { value: "Medical Co-payments", label: "Medical Co-payments" },
-              { value: "Other", label: "Other" },
-            ]}
-            name="typeOfAssistance"
-            placeholder="Select a type of assistance"
-          />
-          <br />
-          <br />
-          <label>Preferred Retailer</label>
-          <br />
-          <br />
-          <Select
-            value={preferredRetailerNew}
-            onChange={(option) => setPreferredRetailerNew(option)}
-            options={[
-              { value: "Walmart", label: "Walmart" },
-              { value: "Publix", label: "Publix" },
-              { value: "Exxon/Mobil Gas", label: "Exxon/Mobil Gas" },
-              { value: "Chevron/Texaco Gas", label: "Chevron/Texaco Gas" },
-              { value: "Shell", label: "Shell" },
-              { value: "Other", label: "Other" },
-            ]}
-            name="preferredRetailerNew"
-            placeholder="Select a preferred retailer"
-          />
+          {preferredRetailer !== "" && type === "Gas" && (
+            <>
+              <label>Preferred Retailer</label>
+              <br />
+              <br />
+              <DropDownListComponent
+                id="ddlelement"
+                dataSource={rightPreferredRetailers()}
+                placeholder="Select a Preferred Retailer"
+                value={preferredRetailerNew}
+                change={(e) => {
+                  setPreferredRetailerNew(e.value !== "Other" ? e.value : "");
+
+                  if (e.value === "Other") {
+                    setPreferredRetailerIsOther(true);
+                  } else {
+                    setPreferredRetailerIsOther(false);
+                  }
+
+                  console.log(e);
+                  console.log(preferredRetailerNew);
+                }}
+              />
+            </>
+          )}
+
+          {preferredRetailerIsOther && (
+            <input
+              required
+              name="otherPreferredRetailer"
+              type="text"
+              className="e-input"
+              value={preferredRetailerNew}
+              onChange={(e) => {
+                setPreferredRetailerNew(e.target.value);
+              }}
+              placeholder="Please specify your preferred retailer"
+            />
+          )}
+
+          {attachment !== "" && (
+            <>
+              <label>Bill</label>
+              <br />
+              <br />
+              <input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files[0]; // accessing file
+                  console.log(file);
+                  setNewAttachment(file);
+                  setUpdateAttachment(true);
+                }}
+              />
+            </>
+          )}
+
           <br />
           <br />
           <label>Additional Notes</label>
@@ -138,9 +258,20 @@ function LLBService({
   } else {
     return (
       <div>
+        <h4>Type of Assistance: {typeOfAssistance.value}</h4>
         <h4>Status: {status === "Completed" ? "Completed" : "In Progress"}</h4>
         <h4>Date service was requested: {requestDate}</h4>
-        <h4>Preferred Retailer: {preferredRetailer.value}</h4>
+        {preferredRetailer !== "" && (
+          <h4>Preferred Retailer: {preferredRetailer.value}</h4>
+        )}
+        {attachment !== "" && (
+          <h4>
+            Bill:{" "}
+            <a href={attachment.url} target="_blank">
+              {attachment.name}
+            </a>
+          </h4>
+        )}
         <h4>Additional Notes: {description}</h4>
         {status !== "Completed" && (
           <button onClick={handleEditServiceClick}>Edit Service</button>
