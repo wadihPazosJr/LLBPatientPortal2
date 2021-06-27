@@ -11,12 +11,243 @@ import { DatePickerComponent } from "@syncfusion/ej2-react-calendars";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { ButtonComponent } from "@syncfusion/ej2-react-buttons";
 
+import {
+  isEmpty,
+  validEmail,
+  isValidPhoneNumber,
+} from "./Components/ValidationFunctions";
+
 const CreateAccount = () => {
   //Properties
 
   let [successSubmit, setSuccessSubmit] = useState(false);
   let [socialWorkerMessage, setSocialWorkerMessage] = useState("");
   let [submitting, setSubmitting] = useState(false);
+
+  const [validation, setValidation] = useState({
+    parentFirstError: "",
+    parentLastError: "",
+    parentGenderError: "",
+    parentEthnicityError: "",
+    parentEmailError: "",
+    parentPhoneError: "",
+    parentAddressError: "",
+    parentCityError: "",
+    parentStateError: "",
+    parentZipError: "",
+    parentCountryError: "",
+    parentVeteranError: "",
+    patientFirstError: "",
+    patientLastError: "",
+    patientGenderError: "",
+    patientEthnicityError: "",
+    patientBirthDayError: "",
+    patientDiagnosisError: "",
+    patientHospitalError: "",
+    patientSocialWorkerError: "",
+    patientAddressError: "",
+    patientCityError: "",
+    patientStateError: "",
+    patientCountryError: "",
+  });
+
+  let [areErrors, setAreErrors] = useState(false);
+
+  const validate = () => {
+    let oldValidation = {
+      parentFirstError: "",
+      parentLastError: "",
+      parentGenderError: "",
+      parentEthnicityError: "",
+      parentEmailError: "",
+      parentPhoneError: "",
+      parentAddressError: "",
+      parentCityError: "",
+      parentStateError: "",
+      parentZipError: "",
+      parentCountryError: "",
+      parentVeteranError: "",
+      patientFirstError: "",
+      patientLastError: "",
+      patientGenderError: "",
+      patientEthnicityError: "",
+      patientBirthDayError: "",
+      patientDiagnosisError: "",
+      patientHospitalError: "",
+      patientSocialWorkerError: "",
+      patientAddressError: "",
+      patientCityError: "",
+      patientStateError: "",
+      patientCountryError: "",
+    };
+
+    setAreErrors(true);
+
+    if (isEmpty(state.parentFirst)) {
+      oldValidation.parentFirstError =
+        "Please provide the parent's first name.";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentLast)) {
+      oldValidation.parentLastError = "Please provide the parent's last name.";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentGender)) {
+      oldValidation.parentGenderError = "Please provide the parent's gender";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentEthnicity)) {
+      oldValidation.parentEthnicityError =
+        "Please provide the parent's ethnicity";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentEmail) || !validEmail(state.parentEmail)) {
+      oldValidation.parentEmailError = "Please provide a valid email";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentPhone) || !isValidPhoneNumber(state.parentPhone)) {
+      oldValidation.parentPhoneError = "Please provide a valid phone number";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentAddress)) {
+      oldValidation.parentAddressError = "Please provide an address";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentCity)) {
+      oldValidation.parentCityError = "Please provide a city";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentState)) {
+      oldValidation.parentStateError = "Please provide a state";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentZip)) {
+      oldValidation.parentZipError = "Please provide a zip code";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentCountry)) {
+      oldValidation.parentCountryError = "Please provide a country";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.parentVeteran)) {
+      oldValidation.parentVeteranError =
+        "Please specify whether or not you are a veteran";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientFirst)) {
+      oldValidation.patientFirstError =
+        "Please provide the patient's first name.";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientLast)) {
+      oldValidation.patientLastError =
+        "Please provide the patient's last name.";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientGender)) {
+      oldValidation.patientGenderError = "Please provide the patient's gender";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientEthnicity)) {
+      oldValidation.patientEthnicityError =
+        "Please provide the patient's ethnicity";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    //Birthday validation
+    if (isEmpty(state.patientBirthDay)) {
+      oldValidation.patientBirthDayError = "Please select a date.";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientDiagnosis)) {
+      oldValidation.patientDiagnosisError = "Please provide a diagnosis";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientHospital)) {
+      oldValidation.patientHospitalError = "Please provide a hospital";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (
+      !isEmpty(state.patientSocialWorker) &&
+      !validEmail(state.patientSocialWorker)
+    ) {
+      oldValidation.patientSocialWorkerError =
+        "Please provide a valid email address";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientAddress)) {
+      oldValidation.patientAddressError = "Please provide an address";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientCity)) {
+      oldValidation.patientCityError = "Please provide a city";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientState)) {
+      oldValidation.patientStateError = "Please provide a state";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientZip)) {
+      oldValidation.patientZipError = "Please provide a zip code";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(state.patientCountry)) {
+      oldValidation.patientCountryError = "Please provide a country";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    setAreErrors(true);
+
+    return true;
+  };
 
   const [state, setState] = useState({
     parentFirst: "",
@@ -111,37 +342,40 @@ const CreateAccount = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     let constituentDoesntExist = false;
-    await fetch(`/constituent/constituentExists?email=${state.parentEmail}`)
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.constituentExists) {
-          alert(
-            "An account with the email you supplied already exists, try logging in with that email."
-          );
-          window.location.href = "/";
-        } else {
-          constituentDoesntExist = true;
+    if (validate()) {
+      setSubmitting(true);
+      await fetch(`/constituent/constituentExists?email=${state.parentEmail}`)
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.constituentExists) {
+            alert(
+              "An account with the email you supplied already exists, try logging in with that email."
+            );
+            window.location.href = "/";
+          } else {
+            constituentDoesntExist = true;
+          }
+        })
+        .catch((err) => console.log(err));
+
+      console.log(
+        `value of constituentDoesnt Exist is: ${constituentDoesntExist}`
+      );
+      if (constituentDoesntExist) {
+        const { message, socialWorker } = await fetch("/constituent/family", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formatReqBody()),
+        })
+          .then((response) => response.json())
+          .catch((error) => console.log(error));
+
+        console.log(`message response was ${JSON.stringify(message)}`);
+
+        if (message === "Successfully made new family") {
+          setSocialWorkerMessage(socialWorker);
+          setSuccessSubmit(true);
         }
-      })
-      .catch((err) => console.log(err));
-
-    console.log(
-      `value of constituentDoesnt Exist is: ${constituentDoesntExist}`
-    );
-    if (constituentDoesntExist) {
-      const { message, socialWorker } = await fetch("/constituent/family", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formatReqBody()),
-      })
-        .then((response) => response.json())
-        .catch((error) => console.log(error));
-
-      console.log(`message response was ${JSON.stringify(message)}`);
-
-      if (message === "Successfully made new family") {
-        setSocialWorkerMessage(socialWorker);
-        setSuccessSubmit(true);
       }
     }
   };
@@ -162,22 +396,21 @@ const CreateAccount = () => {
         <h1>Create new family account</h1>
         <br />
         <br />
-        <form onSubmit={handleSubmit}>
+        <form id="createAccountForm" onSubmit={handleSubmit}>
           <h1>Parent Info</h1>
           <br />
           <input
             placeholder="First Name"
-            required
             name="parentFirst"
             type="text"
             className="e-input"
             value={state.parentFirst}
             onChange={handleChange}
           />
+          <div>{validation.parentFirstError}</div>
           <br />
           <br />
           <input
-            required
             placeholder="Last Name"
             name="parentLast"
             type="text"
@@ -185,6 +418,7 @@ const CreateAccount = () => {
             value={state.parentLast}
             onChange={handleChange}
           />
+          <div>{validation.parentLastError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -198,6 +432,8 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.parentGenderError}</div>
+
           <br />
           <br />
           <DropDownListComponent
@@ -218,10 +454,10 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.parentEthnicityError}</div>
           <br />
           <br />
           <input
-            required
             name="parentEmail"
             type="text"
             className="e-input"
@@ -229,10 +465,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Email"
           />
+          <div>{validation.parentEmailError}</div>
           <br />
           <br />
           <input
-            required
             name="parentPhone"
             type="text"
             className="e-input"
@@ -240,10 +476,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Phone Number"
           />
+          <div>{validation.parentPhoneError}</div>
           <br />
           <br />
           <input
-            required
             name="parentAddress"
             type="text"
             className="e-input"
@@ -251,10 +487,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Address"
           />
+          <div>{validation.parentAddressError}</div>
           <br />
           <br />
           <input
-            required
             name="parentCity"
             type="text"
             className="e-input"
@@ -262,6 +498,7 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="City"
           />
+          <div>{validation.parentCityError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -276,10 +513,10 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.parentStateError}</div>
           <br />
           <br />
           <input
-            required
             name="parentZip"
             type="text"
             className="e-input"
@@ -287,10 +524,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Zip Code"
           />
+          <div>{validation.parentZipError}</div>
           <br />
           <br />
           <input
-            required
             name="parentCountry"
             type="text"
             className="e-input"
@@ -298,6 +535,7 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Country"
           />
+          <div>{validation.parentCountryError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -311,12 +549,12 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.parentVeteranError}</div>
           <br />
           <br />
           <h1>Patient or child info</h1>
           <br />
           <input
-            required
             name="patientFirst"
             type="text"
             className="e-input"
@@ -324,10 +562,11 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="First Name"
           />
+          <div>{validation.patientFirstError}</div>
+
           <br />
           <br />
           <input
-            required
             name="patientLast"
             type="text"
             className="e-input"
@@ -335,6 +574,7 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Last Name"
           />
+          <div>{validation.patientLastError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -348,6 +588,7 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.patientGenderError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -368,18 +609,28 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.patientEthnicityError}</div>
           <br />
           <br />
           <DatePickerComponent
             value={state.patientBirthDay}
             change={(e) => {
               const newState = { ...state };
-              newState.patientBirthDay = e.value.toISOString();
-              setState(newState);
+              let oldValidation = { ...validation };
+              if (typeof e.value === "string") {
+                oldValidation.patientBirthDayError = "Please select a date.";
+                setValidation(oldValidation);
+              } else {
+                oldValidation.patientBirthDayError = "";
+                setValidation(oldValidation);
+                newState.patientBirthDay = e.value.toISOString();
+                setState(newState);
+              }
             }}
             name="patientBirthDay"
             placeholder="Enter Patient Birthdate"
           />
+          <div>{validation.patientBirthDayError}</div>
           <br />
 
           <br />
@@ -394,6 +645,7 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.patientDiagnosisError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -407,10 +659,10 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.patientHospitalError}</div>
           <br />
           <br />
           <input
-            required
             name="patientSocialWorker"
             type="text"
             className="e-input"
@@ -418,10 +670,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Social Worker Email"
           />
+          <div>{validation.patientSocialWorkerError}</div>
           <br />
           <br />
           <input
-            required
             name="patientAddress"
             type="text"
             className="e-input"
@@ -429,10 +681,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Address"
           />
+          <div>{validation.patientAddressError}</div>
           <br />
           <br />
           <input
-            required
             name="patientCity"
             type="text"
             className="e-input"
@@ -440,6 +692,7 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="City"
           />
+          <div>{validation.patientCityError}</div>
           <br />
           <br />
           <DropDownListComponent
@@ -454,10 +707,10 @@ const CreateAccount = () => {
               setState(oldState);
             }}
           />
+          <div>{validation.patientStateError}</div>
           <br />
           <br />
           <input
-            required
             name="patientZip"
             type="text"
             className="e-input"
@@ -465,10 +718,10 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Zip Code"
           />
+          <div>{validation.patientZipError}</div>
           <br />
           <br />
           <input
-            required
             name="patientCountry"
             type="text"
             className="e-input"
@@ -476,12 +729,15 @@ const CreateAccount = () => {
             onChange={handleChange}
             placeholder="Country"
           />
+          <div>{validation.patientCountryError}</div>
           <br />
           <br />
-          <ButtonComponent onClick={e=> {
-            setSubmitting(true);
-            handleSubmit(e)
-            }}>
+          {areErrors && <p>Please fix any errors before submitting</p>}
+          <ButtonComponent
+            onClick={(e) => {
+              handleSubmit(e);
+            }}
+          >
             Create New Family
           </ButtonComponent>
         </form>

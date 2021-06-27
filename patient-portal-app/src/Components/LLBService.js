@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Select from "react-select";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
+import { isEmpty } from "./ValidationFunctions";
 
 function LLBService({
   description,
@@ -30,6 +30,8 @@ function LLBService({
   const [preferredRetailerIsOther, setPreferredRetailerIsOther] =
     useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const rightPreferredRetailers = () => {
     if (type === "Gas") {
       return [
@@ -45,6 +47,40 @@ function LLBService({
       return ["Publix", "Walmart", "Kroger", "Target", "Other"];
     }
   };
+
+  const [validation, setValidation] = useState({
+    preferredRetailerError: "",
+    additionalNotesError: "",
+  });
+
+  const validate = () => {
+    let oldValidation = {
+      typeOfAssistanceError: "",
+      preferredRetailerError: "",
+      additionalNotesError: "",
+      billError: "",
+    };
+
+    if (
+      (typeOfAssistance === "Gas" || typeOfAssistance === "Food") &&
+      isEmpty(preferredRetailerNew)
+    ) {
+      oldValidation.preferredRetailerError =
+        "Please specify a preferred retailer";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(additionalNotes)) {
+      oldValidation.additionalNotesError =
+        "Please provide specifics about your request";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleEditServiceClick = (e) => {
     const currentOnEdit = onEdit;
     setOnEdit(!currentOnEdit);
@@ -52,64 +88,17 @@ function LLBService({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (preferredRetailer !== "") {
-      fetch(`/services/update?id=${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          typeOfAssistance: typeOfAssistance,
-          preferredRetailer: {
-            id: preferredRetailer.id,
-            value: preferredRetailerNew,
-          },
-          additionalNotes: additionalNotes,
-        }),
-      })
-        .then((res) => res.json())
-        .then((res) => {
-          if (res.redirect) {
-            alert(res.message);
-            window.location.href = res.redirect;
-          } else {
-            if (res.message === "Success") {
-              window.location.reload();
-            }
-          }
-        });
-      console.log("reloaded page and finished");
-    }
-
-    if (attachment !== "") {
-      let fileId, fileName;
-      // create new file
-      if (updateAttachment) {
-        const formData = new FormData();
-        formData.append("file", newAttachment); // appending file
-
-        await fetch("/services/createFile", {
-          method: "POST",
-          body: formData,
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            if (res.redirect) {
-              alert(res.message);
-              window.location.href = res.redirect;
-            } else {
-              fileId = res.file_id;
-              fileName = res.file_name;
-            }
-          });
-
+    if (validate()) {
+      setIsLoading(true);
+      if (preferredRetailer !== "") {
         fetch(`/services/update?id=${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             typeOfAssistance: typeOfAssistance,
-            fileInfo: {
-              file_id: fileId,
-              file_name: fileName,
-              oldAttachmentId: attachment.id,
+            preferredRetailer: {
+              id: preferredRetailer.id,
+              value: preferredRetailerNew,
             },
             additionalNotes: additionalNotes,
           }),
@@ -126,27 +115,77 @@ function LLBService({
             }
           });
         console.log("reloaded page and finished");
-      } else {
-        fetch(`/services/update?id=${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            typeOfAssistance: typeOfAssistance,
-            additionalNotes: additionalNotes,
-          }),
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            if (res.redirect) {
-              alert(res.message);
-              window.location.href = res.redirect;
-            } else {
-              if (res.message === "Success") {
-                window.location.reload();
+      }
+
+      if (attachment !== "") {
+        let fileId, fileName;
+        // create new file
+        if (updateAttachment) {
+          const formData = new FormData();
+          formData.append("file", newAttachment); // appending file
+
+          await fetch("/services/createFile", {
+            method: "POST",
+            body: formData,
+          })
+            .then((res) => res.json())
+            .then((res) => {
+              if (res.redirect) {
+                alert(res.message);
+                window.location.href = res.redirect;
+              } else {
+                fileId = res.file_id;
+                fileName = res.file_name;
               }
-            }
-          });
-        console.log("reloaded page and finished");
+            });
+
+          fetch(`/services/update?id=${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              typeOfAssistance: typeOfAssistance,
+              fileInfo: {
+                file_id: fileId,
+                file_name: fileName,
+                oldAttachmentId: attachment.id,
+              },
+              additionalNotes: additionalNotes,
+            }),
+          })
+            .then((res) => res.json())
+            .then((res) => {
+              if (res.redirect) {
+                alert(res.message);
+                window.location.href = res.redirect;
+              } else {
+                if (res.message === "Success") {
+                  window.location.reload();
+                }
+              }
+            });
+          console.log("reloaded page and finished");
+        } else {
+          fetch(`/services/update?id=${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              typeOfAssistance: typeOfAssistance,
+              additionalNotes: additionalNotes,
+            }),
+          })
+            .then((res) => res.json())
+            .then((res) => {
+              if (res.redirect) {
+                alert(res.message);
+                window.location.href = res.redirect;
+              } else {
+                if (res.message === "Success") {
+                  window.location.reload();
+                }
+              }
+            });
+          console.log("reloaded page and finished");
+        }
       }
     }
   };
@@ -203,7 +242,7 @@ function LLBService({
 
           {preferredRetailerIsOther && (
             <input
-              required
+              className="e-input"
               name="otherPreferredRetailer"
               type="text"
               className="e-input"
@@ -214,7 +253,7 @@ function LLBService({
               placeholder="Please specify your preferred retailer"
             />
           )}
-
+          <div>{validation.preferredRetailerError}</div>
           {attachment !== "" && (
             <>
               <label>Bill</label>
@@ -238,20 +277,26 @@ function LLBService({
           <br />
           <br />
           <textarea
-            required
             name="additionalNotes"
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
           ></textarea>
+          <div>{validation.additionalNotesError}</div>
           <br />
           <br />
-          <input type="submit" value="Update Service"></input>
-          <br />
-          <br />
-          <button onClick={deleteService}>Delete Service</button>
-          <br />
-          <br />
-          <button onClick={handleEditServiceClick}>Cancel</button>
+          {!isLoading ? (
+            <>
+              <input type="submit" value="Update Service"></input>
+              <br />
+              <br />
+              <button onClick={deleteService}>Delete Service</button>
+              <br />
+              <br />
+              <button onClick={handleEditServiceClick}>Cancel</button>
+            </>
+          ) : (
+            <p>Please wait...</p>
+          )}
         </form>
       </div>
     );
@@ -266,7 +311,7 @@ function LLBService({
         )}
         {attachment !== "" && (
           <h4>
-            Bill:{" "}
+            Bill:
             <a href={attachment.url} target="_blank">
               {attachment.name}
             </a>

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { hospitalArr, diagnosisArray } from "./ImportedArrays";
+import { hospitalArr, diagnosisArray, stateArr } from "./ImportedArrays";
+import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
+import { isEmpty, validEmail } from "./ValidationFunctions";
 
 function PatientInfo(props) {
   console.log(props);
@@ -11,11 +13,9 @@ function PatientInfo(props) {
       ? props.hospital.value.replaceAll(",", "")
       : "";
   const [onEdit, setOnEdit] = useState();
+  const [isLoading, setIsLoading] = useState(false);
   const [patientFirst, setPatientFirst] = useState(props.first);
   const [patientLast, setPatientLast] = useState(props.last);
-  const [patientMonth, setPatientMonth] = useState(birthDayArr[0]);
-  const [patientDay, setPatientDay] = useState(birthDayArr[1]);
-  const [patientYear, setPatientYear] = useState(birthDayArr[2]);
   const [patientDiagnosis, setPatientDiagnosis] = useState(
     props.diagnosis.value
   );
@@ -31,6 +31,85 @@ function PatientInfo(props) {
   const [patientZip, setPatientZip] = useState(props.zip);
   const [patientCountry, setPatientCountry] = useState(addressArr[3]);
 
+  const [validation, setValidation] = useState({
+    patientDiagnosisError: "",
+    patientHospitalError: "",
+    patientSocialWorkerError: "",
+    patientAddressError: "",
+    patientCityError: "",
+    patientStateError: "",
+    patientZipError: "",
+    patientCountryError: "",
+  });
+
+  const validate = () => {
+    let oldValidation = {
+      patientFirstError: "",
+      patientLastError: "",
+      patientBirthDayError: "",
+      patientDiagnosisError: "",
+      patientHospitalError: "",
+      patientSocialWorkerError: "",
+      patientAddressError: "",
+      patientCityError: "",
+      patientStateError: "",
+      patientCountryError: "",
+    };
+
+    //Birthday validation
+
+    if (isEmpty(patientDiagnosis)) {
+      oldValidation.patientDiagnosisError = "Please provide a diagnosis";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientHospital)) {
+      oldValidation.patientHospitalError = "Please provide a hospital";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (!isEmpty(patientSocialWorker) && !validEmail(patientSocialWorker)) {
+      oldValidation.patientSocialWorkerError =
+        "Please provide a valid email address";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientAddress)) {
+      oldValidation.patientAddressError = "Please provide an address";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientCity)) {
+      oldValidation.patientCityError = "Please provide a city";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientState)) {
+      oldValidation.patientStateError = "Please provide a state";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientZip)) {
+      oldValidation.patientZipError = "Please provide a zip code";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    if (isEmpty(patientCountry)) {
+      oldValidation.patientCountryError = "Please provide a country";
+      setValidation(oldValidation);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleButtonClick = () => {
     const currentOnEdit = onEdit;
     setOnEdit(!currentOnEdit);
@@ -38,82 +117,88 @@ function PatientInfo(props) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const reqBody = {
-      type: "Patient",
-      constituentInfo: {
-        first: patientFirst,
-        last: patientLast,
-        birthdate: {
-          d: parseInt(patientDay),
-          m: parseInt(patientMonth),
-          y: parseInt(patientYear),
-        },
-        address: {
-          id: props.address.id,
-          address_lines: patientAddress,
-          city: patientCity,
-          state: patientState,
-          zip: patientZip,
-          country: patientCountry,
-        },
-      },
-      customFields: [
-        {
-          id: props.diagnosis.id,
-          value: patientDiagnosis,
-        },
-      ],
-      socialWorkerRelationship: {
-        update:
-          props.socialWorker.email !== patientSocialWorker &&
-          patientSocialWorker !== "",
-        relationship_id:
-          props.socialWorker !== "" ? props.socialWorker.relationshipId : "",
-        methodToGetNewConstituent: "email",
+    if (validate()) {
+      setIsLoading(true);
+      const reqBody = {
         type: "Patient",
-        reciprocal_type: "Social Worker",
-        value: patientSocialWorker,
-      },
-      hospitalRelationship: {
-        update: rightHospital !== patientHospital && patientHospital !== "",
-        relationship_id:
-          rightHospital !== "" ? props.hospital.relationshipId : "",
-        methodToGetNewConstituent: "name",
-        type: "Patient",
-        reciprocal_type: "Hospital",
-        value: patientHospital,
-      },
-    };
+        constituentInfo: {
+          first: patientFirst,
+          last: patientLast,
+          birthdate: {
+            d: parseInt(birthDayArr[1]),
+            m: parseInt(birthDayArr[0]),
+            y: parseInt(birthDayArr[2]),
+          },
+          address: {
+            id: props.address.id,
+            address_lines: patientAddress,
+            city: patientCity,
+            state: patientState,
+            zip: patientZip,
+            country: patientCountry,
+          },
+        },
+        customFields: [
+          {
+            id: props.diagnosis.id,
+            value: patientDiagnosis,
+          },
+        ],
+        socialWorkerRelationship: {
+          update:
+            props.socialWorker.email !== patientSocialWorker &&
+            patientSocialWorker !== "",
+          relationship_id:
+            props.socialWorker !== "" ? props.socialWorker.relationshipId : "",
+          methodToGetNewConstituent: "email",
+          type: "Patient",
+          reciprocal_type: "Social Worker",
+          value: patientSocialWorker,
+        },
+        hospitalRelationship: {
+          update: rightHospital !== patientHospital && patientHospital !== "",
+          relationship_id:
+            rightHospital !== "" ? props.hospital.relationshipId : "",
+          methodToGetNewConstituent: "name",
+          type: "Patient",
+          reciprocal_type: "Hospital",
+          value: patientHospital,
+        },
+      };
 
-    console.log(
-      `About to update patient and the request body: ${JSON.stringify(reqBody)}`
-    );
+      console.log(
+        `About to update patient and the request body: ${JSON.stringify(
+          reqBody
+        )}`
+      );
 
-    fetch(`/constituent/updatePatient?id=${props.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      fetch(`/constituent/updatePatient?id=${props.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
 
-      body: JSON.stringify(reqBody),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        console.log(
-          `Finished the call of updating and the value of the response is ${res}`
-        );
+        body: JSON.stringify(reqBody),
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          console.log(
+            `Finished the call of updating and the value of the response is ${res}`
+          );
 
-        if (res.redirect) {
-          alert(res.message);
-          window.location.href = res.redirect;
-        } else {
-          if (res.message !== "") {
+          if (res.redirect) {
             alert(res.message);
+            window.location.href = res.redirect;
+          } else {
+            if (res.message !== "") {
+              alert(res.message);
+            }
+            window.location.reload();
           }
-          window.location.reload();
-        }
-      });
+        });
+    }
   };
 
   const handleDeletePatient = () => {
+    setIsLoading(true);
     fetch(
       `/constituent/socialWorker/deletePatient?id=${props.socialWorker.relationshipId}`,
       {
@@ -139,224 +224,121 @@ function PatientInfo(props) {
         <h1>
           Edit {props.first} {props.last}
         </h1>
-        <label>First Name:</label>
-        <br />
-        <input
-          required
-          name="patientFirst"
-          type="text"
-          value={patientFirst}
-          onChange={(e) => setPatientFirst(e.target.value)}
-        />
-        <br />
-        <label>Last Name:</label>
-        <br />
-        <input
-          required
-          name="patientLast"
-          type="text"
-          value={patientLast}
-          onChange={(e) => setPatientLast(e.target.value)}
-        />
-        <br />
-        <h2>Date of birth:</h2>
-        <label>Month</label>
-        <br />
-        <input
-          required
-          name="patientMonth"
-          type="number"
-          step="1"
-          value={patientMonth}
-          onChange={(e) => setPatientMonth(e.target.value)}
-        />
-        <br />
-        <label>Day</label>
-        <br />
-        <input
-          required
-          name="patientDay"
-          type="number"
-          step="1"
-          value={patientDay}
-          onChange={(e) => setPatientDay(e.target.value)}
-        />
-        <br />
-        <label>Year</label>
-        <br />
-        <input
-          required
-          name="patientYear"
-          type="number"
-          step="1"
-          value={patientYear}
-          onChange={(e) => setPatientYear(e.target.value)}
-        />
         <br />
         <label>Diagnosis</label>
         <br />
-        <select
-          required
-          name="patientDiagnosis"
+        <DropDownListComponent
+          id="ddlelement"
+          dataSource={diagnosisArray}
+          placeholder="Select a diagnosis"
           value={patientDiagnosis}
-          onChange={(e) => setPatientDiagnosis(e.target.value)}
-        >
-          <option value="">Please select a diagnosis</option>
-          {diagnosisArray.map((diagnosis, i) => {
-            return (
-              <option key={i} value={diagnosis}>
-                {diagnosis}
-              </option>
-            );
-          })}
-        </select>
+          change={(e) => {
+            setPatientDiagnosis(e.value);
+          }}
+        />
+        <div>{validation.patientDiagnosisError}</div>
         <br />
         <label>Hospital</label>
         <br />
-        <select
-          required
-          name="patientHospital"
+        <DropDownListComponent
+          id="ddlelement"
+          dataSource={hospitalArr}
+          placeholder="Select a Hospital"
           value={patientHospital}
-          onChange={(e) => setPatientHospital(e.target.value)}
-        >
-          <option value="">Please select a hospital</option>
-          {hospitalArr.map((hospital, i) => {
-            return (
-              <option key={i} value={hospital}>
-                {hospital}
-              </option>
-            );
-          })}
-        </select>
+          change={(e) => {
+            setPatientHospital(e.value);
+          }}
+        />
+        <div>{validation.patientHospitalError}</div>
         <br />
         <label>Social Worker Email</label>
         <br />
         <input
-          required
+          className="e-input"
           name="patientSocialWorker"
           type="text"
           value={patientSocialWorker}
           onChange={(e) => setPatientSocialWorker(e.target.value)}
         />
+        <div>{validation.patientSocialWorkerError}</div>
         <br />
         <label>address</label>
         <br />
         <input
-          required
+          className="e-input"
           name="patientAddress"
           type="text"
           value={patientAddress}
           onChange={(e) => setPatientAddress(e.target.value)}
         />
+        <div>{validation.patientAddressError}</div>
         <br />
         <label>city</label>
         <br />
         <input
-          required
+          className="e-input"
           name="patientCity"
           type="text"
           value={patientCity}
           onChange={(e) => setPatientCity(e.target.value)}
         />
+        <div>{validation.patientCityError}</div>
         <br />
         <label>State</label>
         <br />
-        <select
-          required
-          name="patientState"
+        <DropDownListComponent
+          id="ddlelement"
+          dataSource={stateArr}
+          fields={{ text: "name", value: "abbreviation" }}
+          placeholder="Select a state"
           value={patientState}
-          onChange={(e) => setPatientState(e.target.value)}
-        >
-          <option value="">Please select a state</option>
-          <option value="AL">Alabama</option>
-          <option value="AK">Alaska</option>
-          <option value="AZ">Arizona</option>
-          <option value="AR">Arkansas</option>
-          <option value="CA">California</option>
-          <option value="CO">Colorado</option>
-          <option value="CT">Connecticut</option>
-          <option value="DE">Delaware</option>
-          <option value="DC">District Of Columbia</option>
-          <option value="FL">Florida</option>
-          <option value="GA">Georgia</option>
-          <option value="HI">Hawaii</option>
-          <option value="ID">Idaho</option>
-          <option value="IL">Illinois</option>
-          <option value="IN">Indiana</option>
-          <option value="IA">Iowa</option>
-          <option value="KS">Kansas</option>
-          <option value="KY">Kentucky</option>
-          <option value="LA">Louisiana</option>
-          <option value="ME">Maine</option>
-          <option value="MD">Maryland</option>
-          <option value="MA">Massachusetts</option>
-          <option value="MI">Michigan</option>
-          <option value="MN">Minnesota</option>
-          <option value="MS">Mississippi</option>
-          <option value="MO">Missouri</option>
-          <option value="MT">Montana</option>
-          <option value="NE">Nebraska</option>
-          <option value="NV">Nevada</option>
-          <option value="NH">New Hampshire</option>
-          <option value="NJ">New Jersey</option>
-          <option value="NM">New Mexico</option>
-          <option value="NY">New York</option>
-          <option value="NC">North Carolina</option>
-          <option value="ND">North Dakota</option>
-          <option value="OH">Ohio</option>
-          <option value="OK">Oklahoma</option>
-          <option value="OR">Oregon</option>
-          <option value="PA">Pennsylvania</option>
-          <option value="RI">Rhode Island</option>
-          <option value="SC">South Carolina</option>
-          <option value="SD">South Dakota</option>
-          <option value="TN">Tennessee</option>
-          <option value="TX">Texas</option>
-          <option value="UT">Utah</option>
-          <option value="VT">Vermont</option>
-          <option value="VA">Virginia</option>
-          <option value="WA">Washington</option>
-          <option value="WV">West Virginia</option>
-          <option value="WI">Wisconsin</option>
-          <option value="WY">Wyoming</option>
-          <option value="AS">American Samoa</option>
-          <option value="GU">Guam</option>
-          <option value="MP">Northern Mariana Islands</option>
-          <option value="PR">Puerto Rico</option>
-          <option value="UM">United States Minor Outlying Islands</option>
-          <option value="VI">Virgin Islands</option>
-        </select>
+          change={(e) => {
+            setPatientState(e.value);
+          }}
+        />
         <br />
+        <div>{validation.patientStateError}</div>
         <label>zip code</label>
         <br />
         <input
-          required
+          className="e-input"
           name="patientZip"
           type="text"
           value={patientZip}
           onChange={(e) => setPatientZip(e.target.value)}
         />
+        <div>{validation.patientZipError}</div>
         <br />
         <label>country</label>
         <br />
         <input
-          required
+          className="e-input"
           name="patientCountry"
           type="text"
           value={patientCountry}
           onChange={(e) => setPatientCountry(e.target.value)}
         />
+        <div>{validation.patientCountryError}</div>
         <br />
         <br />
-        <input type="submit" value="Update Info"></input>
-        <br />
-        <br />
-        {props.view === "Social Worker" && (
-          <button onClick={handleDeletePatient}>Delete Patient</button>
+        {isLoading ? (
+          <p>Please wait...</p>
+        ) : (
+          <>
+            <input type="submit" value="Update Info"></input>
+            <br />
+            <br />
+            {props.view === "Social Worker" && (
+              <>
+                <button onClick={handleDeletePatient}>Delete Patient</button>
+                <br />
+                <br />
+              </>
+            )}
+
+            <button onClick={handleButtonClick}>Cancel</button>
+          </>
         )}
-        <br />
-        <br />
-        <button onClick={handleButtonClick}>Cancel</button>
       </form>
     );
   } else {
